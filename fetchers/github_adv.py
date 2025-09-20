@@ -62,15 +62,23 @@ def search_recent_repos(keywords: List[str], token: str) -> List[Dict[str,Any]]:
     """
     today = _dt.date.today()
     since = today - _dt.timedelta(days=DAYS_BACK)
-    out: Dict[str, Dict[str,Any]] = {}  # full_name -> repo
+    out: List[Dict[str,Any]] = []
     for kw in keywords:
         # 滚动窗口（大窗口可能仍会被递归二分）
         s = since
         while s <= today:
             e = min(s + _dt.timedelta(days=SLICE_DAYS-1), today)
             for it in _search_window(kw, s, e, token):
-                name = it.get("full_name")
-                if name and name not in out:
-                    out[name] = it
+                # 只采集最近三个月（92天）内的更新
+                updated_at = it.get("updated_at")
+                try:
+                    if updated_at:
+                        from datetime import datetime, timezone
+                        ts = datetime.fromisoformat(updated_at.replace('Z','+00:00'))
+                        if (today - ts.date()).days > DAYS_BACK:
+                            continue
+                except Exception:
+                    continue
+                out.append(it)
             s = e + _dt.timedelta(days=1)
-    return list(out.values())
+    return out

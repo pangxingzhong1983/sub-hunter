@@ -9,8 +9,11 @@ from storage.history import load_history, save_history, update_all
 import asyncio, os, sys, time
 
 KEYWORDS = [
-    "clash.yaml","clash subscription","free v2ray sub",
-    "订阅 转换","免费 节点","v2ray 订阅"
+    "clash.yaml", "clash.yml", "clash订阅", "clash subscribe", "clash subscription", "clash sub", "clash free", "clash节点", "clash proxy",
+    "v2ray订阅", "v2ray sub", "v2ray free", "v2ray节点", "v2ray proxy", "free v2ray", "free v2ray sub", "免费v2ray", "免费节点",
+    "subconverter", "sub", "subscribe", "订阅", "机场订阅", "proxy subscribe", "proxy subscription", "proxy sub", "proxy list",
+    "ss订阅", "ss sub", "trojan订阅", "trojan sub", "mihomo订阅", "mihomo sub", "clash.meta订阅", "clash.meta sub",
+    "节点分享", "节点订阅", "SSR订阅", "SSR sub", "SSR free", "SSR节点", "SSR proxy", "SSR list"
 ]
 
 MAX_REPOS = 0        # 先小批量验证，后续可改为 0=不限
@@ -27,6 +30,7 @@ def gather_candidates(token):
 
     for repo in repos:
         full = repo.get("full_name")
+        updated_at = repo.get("updated_at")  # ISO8601 字符串
         if not full:
             continue
         repo_cnt += 1
@@ -42,14 +46,31 @@ def gather_candidates(token):
                 txt = fetch_text(url)
             except Exception:
                 continue
+            # 统计订阅条目数（proxies/vmess/vless/ss/trojan）
+            entry_count = 0
+            try:
+                import yaml, re
+                if path.lower().endswith(('.yaml','.yml')):
+                    data = yaml.safe_load(txt)
+                    if isinstance(data, dict) and "proxies" in data and isinstance(data["proxies"], list):
+                        entry_count = len(data["proxies"])
+                elif path.lower().endswith('.txt'):
+                    entry_count = len(re.findall(r'(vmess://|vless://|trojan://|ss://)', txt, re.I))
+            except Exception:
+                entry_count = 0
+            from filters.validator import is_valid_subscription
             for u in extract_candidate_urls(txt):
-                found.append({
-                    "owner": owner_of_repo(full),
-                    "src": full,
-                    "path": path,
-                    "url": u,
-                    "score": score_link(u, path),
-                })
+                # 只保留内容校验通过的订阅链接
+                if is_valid_subscription(u, txt):
+                    found.append({
+                        "owner": owner_of_repo(full),
+                        "src": full,
+                        "path": path,
+                        "url": u,
+                        "score": score_link(u, path),
+                        "updated_at": updated_at,
+                        "entry_count": entry_count,
+                    })
     best = pick_one_per_owner(found)
     uniq, seen = [], set()
     for it in best:
@@ -97,8 +118,11 @@ def main():
         f.write("\n".join(all_urls))
     print(">>> 已写入 output/subs_latest.txt")
 
-    ok_up, code = upload_gist(all_urls)
-    print(f">>> Gist上传: {ok_up} ({code})")
+    if len(all_urls) == 0:
+        print(">>> 订阅链接数量为0，跳过 Gist 上传！")
+    else:
+        ok_up, code = upload_gist(all_urls)
+        print(f">>> Gist上传: {ok_up} ({code})")
 
 if __name__ == "__main__":
     main()

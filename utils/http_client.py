@@ -26,10 +26,13 @@ def _sleep_from_headers(resp: requests.Response):
     return None
 
 def _build_http_proxies() -> Dict[str,str]:
-    # 只走 HTTP/HTTPS 代理；忽略 ALL_PROXY（避免 SOCKS 抽风）
-    hp = os.environ.get("HTTP_PROXY")  or os.environ.get("http_proxy")  or "http://127.0.0.1:1983"
-    sp = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy") or "http://127.0.0.1:1983"
-    return {"http": hp, "https": sp}
+    # 默认不设置代理，完全走系统环境
+    hp = os.environ.get("HTTP_PROXY")  or os.environ.get("http_proxy")
+    sp = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy")
+    proxies = {}
+    if hp: proxies["http"] = hp
+    if sp: proxies["https"] = sp
+    return proxies
 
 def request(method: str, url: str, *, headers: Dict[str,str]=None,
             params: Dict[str,Any]=None, data: Any=None, json: Any=None,
