@@ -24,9 +24,9 @@ def score_link(url: str, path: str) -> int:
     return score
 
 
-def pick_one_per_owner(items: List[Dict]) -> List[Dict]:
+def pick_one_per_repo(items: List[Dict]) -> List[Dict]:
     """
-    每个 owner 只保留：
+    每个 owner+repo 只保留：
     1. 最新更新时间（updated_at）
     2. 内容条目数最多（entry_count）
     3. txt 类型优先（score）
@@ -35,31 +35,30 @@ def pick_one_per_owner(items: List[Dict]) -> List[Dict]:
     best = {}
     for it in items:
         owner = it.get("owner")
+        repo = it.get("src")
         updated_at = it.get("updated_at")
         entry_count = it.get("entry_count", 0)
         score = it.get("score", 0)
-        if not owner:
+        if not owner or not repo:
             continue
-        # 时间戳转为可比较对象
+        key = f"{owner}/{repo}"
         try:
             ts = datetime.fromisoformat(updated_at) if updated_at else datetime.min
         except Exception:
             ts = datetime.min
         it["_ts"] = ts
-        # 选取逻辑：时间优先，其次内容条目数，再其次txt优先
-        if owner not in best:
-            best[owner] = it
+        if key not in best:
+            best[key] = it
         else:
-            cur = best[owner]
+            cur = best[key]
             if it["_ts"] > cur["_ts"]:
-                best[owner] = it
+                best[key] = it
             elif it["_ts"] == cur["_ts"]:
                 if entry_count > cur.get("entry_count", 0):
-                    best[owner] = it
+                    best[key] = it
                 elif entry_count == cur.get("entry_count", 0):
                     if score > cur.get("score", 0):
-                        best[owner] = it
-    # 去掉临时字段
+                        best[key] = it
     for v in best.values():
         v.pop("_ts", None)
     return list(best.values())

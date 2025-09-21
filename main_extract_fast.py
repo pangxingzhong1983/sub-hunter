@@ -2,7 +2,7 @@ from storage.secure import get_secret
 from fetchers.github_adv import search_recent_repos
 from fetchers.gh_files import list_repo_tree, candidate_paths, raw_url
 from filters.extract import fetch_text, extract_candidate_urls
-from filters.deduper import owner_of_repo, pick_one_per_owner, score_link
+from filters.deduper import owner_of_repo, pick_one_per_repo, score_link
 from checker.async_check import check_urls
 from storage.history import load_history, save_history, update_all
 
@@ -16,7 +16,7 @@ KEYWORDS = [
     "节点分享", "节点订阅", "SSR订阅", "SSR sub", "SSR free", "SSR节点", "SSR proxy", "SSR list"
 ]
 
-MAX_REPOS = 0        # 先小批量验证，后续可改为 0=不限
+MAX_REPOS = 100      # 调试限流，快速采集
 PRINT_EVERY_REPO = 10  # 每处理多少仓库打一次进度
 PRINT_EVERY_FILE = 50  # 每检查多少文件打一次进度
 
@@ -71,7 +71,8 @@ def gather_candidates(token):
                         "updated_at": updated_at,
                         "entry_count": entry_count,
                     })
-    best = pick_one_per_owner(found)
+    from filters.deduper import pick_one_per_repo
+    best = pick_one_per_repo(found)
     uniq, seen = [], set()
     for it in best:
         if it["url"] not in seen:
