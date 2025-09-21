@@ -16,11 +16,17 @@ KEYWORDS = [
     "节点分享", "节点订阅", "SSR订阅", "SSR sub", "SSR free", "SSR节点", "SSR proxy", "SSR list"
 ]
 
-MAX_REPOS = 100      # 调试限流，快速采集
+MAX_REPOS = 20       # 极限加速测试
 PRINT_EVERY_REPO = 10  # 每处理多少仓库打一次进度
 PRINT_EVERY_FILE = 50  # 每检查多少文件打一次进度
 
 def gather_candidates(token):
+    import signal
+    def handler(signum, frame):
+        print("[E] 采集超时/卡死，建议缩小采集范围或检查网络！")
+        exit(1)
+    signal.signal(signal.SIGALRM, handler)
+    signal.alarm(120)  # 最多运行2分钟
     t0 = time.time()
     repos = search_recent_repos(KEYWORDS, token=token)
     if MAX_REPOS and len(repos) > MAX_REPOS:
