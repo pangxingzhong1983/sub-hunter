@@ -13,7 +13,7 @@ KEYWORDS = [
     "订阅 转换","免费 节点","v2ray 订阅"
 ]
 
-MAX_REPOS = 20        # 先小批量验证，后续可改为 0=不限
+MAX_REPOS = 30        # 先小批量验证，后续可改为 0=不限
 PRINT_EVERY_REPO = 10  # 每处理多少仓库打一次进度
 PRINT_EVERY_FILE = 50  # 每检查多少文件打一次进度
 
