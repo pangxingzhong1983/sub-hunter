@@ -4,6 +4,12 @@ from utils.http_client import request
 URL_RE = re.compile(r'https?://[^\s"\'<>]+', re.IGNORECASE)
 KEYS   = ("clash","mihomo","v2ray","sub","subscribe","subconverter")
 
+EXT_KEYS = [
+    "subscribe", "sub", "clash", "v2ray", "ss", "vless", "vmess", "trojan", "hysteria2", "tuic", "yaml", "list"
+]
+# 后缀白名单：只要后缀为这些，直接保留，无需关键词
+SUFFIX_WHITELIST = ["yaml", "yml", "txt"]
+
 # 超时/限流
 FETCH_TIMEOUT = 10      # 单文件最大10s
 MAX_BYTES     = 256*1024  # 最多读取256KB，防止大文件卡住
@@ -24,7 +30,15 @@ def fetch_text(url: str, timeout: int = FETCH_TIMEOUT) -> str:
         return ""
 
 def extract_candidate_urls(text: str):
+    # 放宽规则：只要包含 clash/v2ray/ss/trojan/subscribe/sub/节点/机场/分流/规则/配置/免费/订阅/链接/地址/源/转换/分享/分组
     for u in URL_RE.findall(text or ""):
         lu = u.lower()
-        if any(k in lu for k in KEYS):
+        last = lu.split('/')[-1].split('?')[0].split('#')[0]
+        # 后缀白名单，yaml/yml/txt直接保留
+        if '.' in last:
+            suf = last.split('.')[-1]
+            if suf in SUFFIX_WHITELIST:
+                yield u
+                continue
+        if any(k in lu for k in EXT_KEYS):
             yield u
