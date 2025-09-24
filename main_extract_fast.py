@@ -10,10 +10,10 @@ import asyncio, os, sys, time
 
 KEYWORDS = [
     "clash.yaml","clash subscription","free v2ray sub",
-    "订阅 转换","免费 节点","v2ray 订阅"
+    "订阅 转换","免费 节点","v2ray 订阅","free v2ray","free vpn","free clash"
 ]
 
-MAX_REPOS = 20        # 先小批量验证，后续可改为 0=不限
+MAX_REPOS = 10        # 先小批量验证，后续可改为 0=不限
 PRINT_EVERY_REPO = 10  # 每处理多少仓库打一次进度
 PRINT_EVERY_FILE = 50  # 每检查多少文件打一次进度
 
@@ -23,34 +23,99 @@ def gather_candidates(token):
         if visited is None:
             visited = set()
         results = []
+        SUFFIX_DIRECT_SAVE = (".txt", ".yaml", ".yml")
+        DOMAIN_BLACKLIST = ("www.youtube.com", "youtu.be")
+        from urllib.parse import urlparse
+        TEXT_EXTS = ('.txt','.yaml','.yml','.md','.json','.conf','.ini','.list')
+        SKIP_EXTS = ('.png','.jpg','.jpeg','.svg','.gif','.bmp','.ico','.webp','.pdf','.exe','.apk','.zip','.tar','.gz','.rar','.7z','.mp3','.mp4','.avi','.mov','.mkv','.woff2','.ttf','.otf','.eot')
         for url in urls:
             if url in visited:
                 continue
             visited.add(url)
-            print(f"[R] 递归抓取: url={url} depth={depth}")
             try:
-                txt = fetch_text(url)
-            except Exception:
-                print(f"[R] 抓取失败: url={url} depth={depth}")
+                domain = urlparse(url).netloc.lower()
+            except Exception as e:
+                print(f"[R] urlparse失败跳过: {url} ({e})")
                 continue
-            extracted = list(extract_candidate_urls(txt))
-            print(f"[R] url={url} depth={depth} 抽取到新链接数: {len(extracted)}")
-            for u in extracted:
+            last = url.split('/')[-1].split('?')[0].split('#')[0].lower()
+            # 黑名单域名直接跳过
+            if domain in DOMAIN_BLACKLIST:
+                print(f"[R] 黑名单域名跳过: {url}")
+                continue
+            # 命中白名单后缀或关键词的链接无条件保存
+            from filters.extract import EXT_KEYS, SUFFIX_WHITELIST
+            suf = last.split('.')[-1] if '.' in last else ''
+            # 关键词模糊匹配（忽略大小写，部分匹配）
+            url_lc = url.lower()
+            fuzzy_hit = any(k.lower() in url_lc for k in EXT_KEYS)
+            if suf in SUFFIX_WHITELIST or fuzzy_hit:
+                print(f"[R] 直接保存URL（命中白名单/关键词）: {url}")
                 results.append({
                     "owner": owner,
                     "src": src,
                     "path": path or url,
-                    "url": u,
-                    "score": score_link(u, path or url),
+                    "url": url,
+                    "score": score_link(url, path or url),
                 })
-            # 递归访问新抽取到的链接
-            if depth > 1:
-                results += recursive_extract(extracted, depth=depth-1, visited=visited, owner=owner, src=src, path=path or url)
+                # 只要不是txt/yaml/yml，且是文本类才递归
+                if suf not in SUFFIX_DIRECT_SAVE and any(last.endswith(suf2) for suf2 in TEXT_EXTS):
+                    print(f"[R] 递归抓取: url={url} depth={depth}")
+                    import concurrent.futures
+                    txt = None
+                    def fetch_with_timeout(u):
+                        return fetch_text(u)
+                    try:
+                        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                            future = executor.submit(fetch_with_timeout, url)
+                            txt = future.result(timeout=10)
+                    except Exception:
+                        print(f"[R] 抓取失败或超时: url={url} depth={depth}")
+                        continue
+                    extracted = list(extract_candidate_urls(txt))
+                    print(f"[R] url={url} depth={depth} 抽取到新链接数: {len(extracted)}")
+                    for u in extracted:
+                        results.append({
+                            "owner": owner,
+                            "src": src,
+                            "path": path or url,
+                            "url": u,
+                            "score": score_link(u, path or url),
+                        })
+                    if depth > 1:
+                        results += recursive_extract(extracted, depth=depth-1, visited=visited, owner=owner, src=src, path=path or url)
+                continue
+            # 其它情况，只有文本类才递归
+            if any(last.endswith(suf) for suf in TEXT_EXTS):
+                print(f"[R] 递归抓取: url={url} depth={depth}")
+                import concurrent.futures
+                txt = None
+                def fetch_with_timeout(u):
+                    return fetch_text(u)
+                try:
+                    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                        future = executor.submit(fetch_with_timeout, url)
+                        txt = future.result(timeout=10)
+                except Exception:
+                    print(f"[R] 抓取失败或超时: url={url} depth={depth}")
+                    continue
+                extracted = list(extract_candidate_urls(txt))
+                print(f"[R] url={url} depth={depth} 抽取到新链接数: {len(extracted)}")
+                for u in extracted:
+                    results.append({
+                        "owner": owner,
+                        "src": src,
+                        "path": path or url,
+                        "url": u,
+                        "score": score_link(u, path or url),
+                    })
+                if depth > 1:
+                    results += recursive_extract(extracted, depth=depth-1, visited=visited, owner=owner, src=src, path=path or url)
         return results
     t0 = time.time()
-    repos = search_recent_repos(KEYWORDS, token=token)
-    if MAX_REPOS and len(repos) > MAX_REPOS:
-        repos = repos[:MAX_REPOS]
+    limit = MAX_REPOS if MAX_REPOS else None
+    repos = search_recent_repos(KEYWORDS, token=token, limit=limit)
+    if limit and len(repos) > limit:
+        repos = repos[:limit]
     print(f"[I] 待处理仓库: {len(repos)}")
     found=[]; repo_cnt=0; file_cnt=0
 
@@ -63,7 +128,9 @@ def gather_candidates(token):
             print(f"[I] 仓库进度: {repo_cnt}/{len(repos)} | 已命中链接: {len(found)} | 耗时: {int(time.time()-t0)}s")
         # 抓取 README.md 和 description
         desc = repo.get("description") or ""
-        readme_url = f"https://raw.githubusercontent.com/{full}/master/README.md"
+        default_branch = repo.get("default_branch") or "HEAD"
+        readme_branch = default_branch if default_branch else "HEAD"
+        readme_url = f"https://raw.githubusercontent.com/{full}/{readme_branch}/README.md"
         readme_txt = ""
         try:
             readme_txt = fetch_text(readme_url)
@@ -81,6 +148,17 @@ def gather_candidates(token):
             if file_cnt % PRINT_EVERY_FILE == 0:
                 print(f"[I] 文件进度: {file_cnt} | 已命中链接: {len(found)} | 当前仓库: {full}")
             url = raw_url(full, path)
+            lp = path.lower()
+            if lp.endswith(('.txt','.yaml','.yml')):
+                print(f"[D] 仓库:{full} 路径:{path} 直接保存订阅文件URL: {url}")
+                found.append({
+                    "owner": owner_of_repo(full),
+                    "src": full,
+                    "path": path,
+                    "url": url,
+                    "score": score_link(url, path),
+                })
+                continue
             try:
                 txt = fetch_text(url)
             except Exception:
@@ -98,13 +176,18 @@ def gather_candidates(token):
     print(f"[I] 去重后链接数: {len(uniq)}")
     return uniq
 
-def upload_gist(lines):
+def upload_gist_from_file(filepath):
     gid = get_secret("sub-hunter","GIST_ID")
     tok = get_secret("sub-hunter","GIST_TOKEN")
     if not gid or not tok:
         return False, "no gist secrets"
     import requests
-    payload = {"files": {"zhuquejisu.txt": {"content": "\n".join(lines)}}}
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            content = f.read()
+    except Exception as e:
+        return False, f"file read error: {e}"
+    payload = {"files": {"zhuquejisu.txt": {"content": content}}}
     r = requests.patch(
         f"https://api.github.com/gists/{gid}",
         headers={"Authorization": f"Bearer {tok}",
@@ -134,7 +217,7 @@ def main():
         ".mrs", ".list", ".html", ".ini", ".atom", ".git", ".go", ".md", ".pdf", ".doc", ".xls", ".ppt", ".exe", ".apk", ".zip", ".tar", ".gz", ".rar", ".7z", ".bmp", ".ttf", ".otf", ".eot", ".mp3", ".mp4", ".avi", ".mov", ".mkv", ".webm", ".json", ".xml", ".rss", ".atom", ".map", ".psd", ".ai", ".eps", ".dmg", ".iso", ".bin", ".csv", ".ts", ".tsx", ".jsx", ".vue", ".svelte", ".php", ".asp", ".aspx", ".jsp", ".cgi", ".pl", ".rb", ".go", ".rs", ".swift", ".kt", ".dart", ".sh", ".bat", ".cmd", ".ps1", ".dockerfile", ".gitignore", ".gitattributes", ".editorconfig", ".npmignore", ".yarn.lock", ".woff2", ".ico", ".svg", ".png", ".jpg", ".webp", ".css", ".js", ".fonts"
     ]
     KEYWORDS = [
-        "subscribe", "sub", "clash", "v2ray", "ss", "vless", "vmess", "trojan", "hysteria2", "tuic", "yaml", "list"
+        "subscribe", "sub", "clash", "v2ray", "ss", "vless", "vmess", "trojan", "hysteria2", "tuic", "yaml", "list", "v2", "free", "public", "Router"
     ]
     from filters.extract import SUFFIX_WHITELIST
     def is_subscription_url(url):
@@ -163,11 +246,30 @@ def main():
         return False
     urls = [it["url"] for it in items if is_subscription_url(it["url"])]
     print(f"[统计] 抓取总数: {len(items)}，筛选后订阅数: {len(urls)}")
-    print(">>> 连通性检测…")
-    ok = asyncio.run(check_urls(urls, concurrency=20))
-    print(f"[统计] 可用订阅链接: {len(ok)}")
 
     hist = load_history()
+    existing = hist.get("seen", []) or []
+
+    merged = []
+    seen_urls = set()
+    for u in existing:
+        if u and u not in seen_urls:
+            merged.append(u)
+            seen_urls.add(u)
+    for u in urls:
+        if u and u not in seen_urls:
+            merged.append(u)
+            seen_urls.add(u)
+
+    print(f"[统计] 历史合并后待检测: {len(merged)}")
+    if not merged:
+        print(">>> 无可检测链接，跳过连通性检测和 Gist 上传！")
+        return
+
+    print(">>> 连通性检测…")
+    ok = asyncio.run(check_urls(merged, concurrency=20))
+    print(f"[统计] 可用订阅链接: {len(ok)}")
+
     all_urls = update_all(hist, ok)
     save_history(hist)
     print(f"[统计] 本次全量覆盖: {len(all_urls)} 条")
@@ -181,7 +283,7 @@ def main():
         print(">>> 订阅链接数量为0，跳过 Gist 上传！")
         return
 
-    ok_up, code = upload_gist(all_urls)
+    ok_up, code = upload_gist_from_file("output/subs_latest.txt")
     print(f">>> Gist上传: {ok_up} ({code})")
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 from utils.http_client import request
 
 SKIP_REPO_SUBSTR = ("github.io",)
-KEEP_EXT = (".yaml",".yml",".txt",".list",".json",".conf",".ini")
+KEEP_EXT = (".yaml",".yml",".txt",".conf",".ini",".md")
 KEEP_KEYS = ("clash","mihomo","v2ray","sub","subscribe","subscrib","converter")
 SKIP_DIRS = (
     "assets/","static/","images/","img/","css/","js/","fonts/","node_modules/",

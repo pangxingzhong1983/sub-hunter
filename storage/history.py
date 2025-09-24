@@ -15,9 +15,17 @@ def save_history(data):
 
 def update_all(history, items):
     """
-    items: list[str] 全部新检测通过的可用订阅URL
+    items: list[str] 经过连通性检测后仍可用的订阅URL
+    直接按给定顺序去重保存，旧链接若未通过检测会被移除。
     """
-    history["seen"] = sorted(set(items))
-    history["last_total"] = len(history["seen"])
+    merged = []
+    seen = set()
+    for url in items:
+        if url and url not in seen:
+            merged.append(url)
+            seen.add(url)
+
+    history["seen"] = merged
+    history["last_total"] = len(merged)
     history["ts"] = int(time.time())
-    return history["seen"]
+    return merged

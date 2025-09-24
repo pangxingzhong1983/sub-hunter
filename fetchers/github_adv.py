@@ -56,13 +56,16 @@ def _search_window(keyword: str, start: _dt.date, end: _dt.date, token: str) -> 
     else:
         yield from _page_all_repos(q, token)
 
-def search_recent_repos(keywords: List[str], token: str) -> List[Dict[str,Any]]:
+def search_recent_repos(keywords: List[str], token: str, limit: int | None = None) -> List[Dict[str,Any]]:
     """
     近 DAYS_BACK 天内，按 SLICE_DAYS 切片；对每个关键词覆盖所有结果（无页数上限），自动避开1000限制
     """
     today = _dt.date.today()
     since = today - _dt.timedelta(days=DAYS_BACK)
     out: Dict[str, Dict[str,Any]] = {}  # full_name -> repo
+
+    if limit is not None and limit <= 0:
+        limit = None
     for kw in keywords:
         # 滚动窗口（大窗口可能仍会被递归二分）
         s = since
@@ -72,5 +75,11 @@ def search_recent_repos(keywords: List[str], token: str) -> List[Dict[str,Any]]:
                 name = it.get("full_name")
                 if name and name not in out:
                     out[name] = it
+                    if limit and len(out) >= limit:
+                        return list(out.values())
+            if limit and len(out) >= limit:
+                break
             s = e + _dt.timedelta(days=1)
+        if limit and len(out) >= limit:
+            break
     return list(out.values())
