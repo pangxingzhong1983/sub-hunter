@@ -11,7 +11,7 @@ def _date_str(d: _dt.date) -> str:
 def _preflight_repo_count(q: str, token: str) -> int:
     # 轻量探测：per_page=1 拿 total_count
     params = {"q": q, "per_page": 1}
-    r = request("GET", f"{BASE}/search/repositories", params=params, token=token, timeout=25)
+    r = request("GET", f"{BASE}/search/repositories", params=params, token=token, timeout=45)
     r.raise_for_status()
     return int(r.json().get("total_count", 0))
 

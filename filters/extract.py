@@ -1,6 +1,17 @@
 import re
 from utils.http_client import request
 
+_HEAD_TRIM = "([\"'`《〈「『【（“”"
+_TAIL_TRIM = ")>\"'`，。、；：！？》〉」』】）“”"
+
+def normalize_url(url: str) -> str:
+    if not url:
+        return ""
+    u = url.strip()
+    u = u.lstrip(_HEAD_TRIM)
+    u = u.rstrip(_TAIL_TRIM)
+    return u
+
 URL_RE = re.compile(r'https?://[^\s"\'<>]+', re.IGNORECASE)
 KEYS   = ("clash","mihomo","v2ray","sub","subscribe","subconverter")
 
@@ -31,7 +42,10 @@ def fetch_text(url: str, timeout: int = FETCH_TIMEOUT) -> str:
 
 def extract_candidate_urls(text: str):
     # 放宽规则：只要包含 clash/v2ray/ss/trojan/subscribe/sub/节点/机场/分流/规则/配置/免费/订阅/链接/地址/源/转换/分享/分组
-    for u in URL_RE.findall(text or ""):
+    for raw in URL_RE.findall(text or ""):
+        u = normalize_url(raw)
+        if not u:
+            continue
         lu = u.lower()
         last = lu.split('/')[-1].split('?')[0].split('#')[0]
         # 后缀白名单，yaml/yml/txt直接保留

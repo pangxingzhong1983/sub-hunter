@@ -1,4 +1,4 @@
-import time, urllib.parse, os
+import time, urllib.parse
 import requests, urllib3, certifi
 from typing import Optional, Dict, Any
 from utils.rate_limiter import limiter
@@ -25,17 +25,6 @@ def _sleep_from_headers(resp: requests.Response):
             pass
     return None
 
-def _build_http_proxies() -> Dict[str,str] | None:
-    # 只在显式设置时使用代理；否则保持直连
-    hp = os.environ.get("HTTP_PROXY") or os.environ.get("http_proxy") or ""
-    sp = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy") or ""
-    proxies = {}
-    if hp:
-        proxies["http"] = hp
-    if sp:
-        proxies["https"] = sp
-    return proxies or None
-
 def request(method: str, url: str, *, headers: Dict[str,str]=None,
             params: Dict[str,Any]=None, data: Any=None, json: Any=None,
             timeout: float=20, token: Optional[str]=None, retries: int=MAX_RETRIES) -> requests.Response:
@@ -44,7 +33,6 @@ def request(method: str, url: str, *, headers: Dict[str,str]=None,
     if token and "Authorization" not in headers:
         headers["Authorization"] = f"Bearer {token}"
 
-    proxies = _build_http_proxies()
     host = _host(url)
     backoff = 1.0
     last_resp = None
@@ -53,21 +41,32 @@ def request(method: str, url: str, *, headers: Dict[str,str]=None,
     for attempt in range(retries+1):
         limiter.acquire(host)
         try:
+            verify = CA_BUNDLE if not tried_insecure else False
             resp = requests.request(
                 method.upper(), url,
                 headers=headers, params=params, data=data, json=json,
-                timeout=timeout, verify=CA_BUNDLE, proxies=proxies
+                timeout=timeout, verify=verify
             )
         except requests.exceptions.SSLError:
             if not tried_insecure:
                 tried_insecure = True
-                resp = requests.request(
-                    method.upper(), url,
-                    headers=headers, params=params, data=data, json=json,
-                    timeout=timeout, verify=False, proxies=proxies
-                )
-            else:
-                raise
+                wait = min(backoff, MAX_BACKOFF)
+                backoff = min(backoff * 2, MAX_BACKOFF)
+                time.sleep(wait)
+                continue
+            if attempt < retries:
+                wait = min(backoff, MAX_BACKOFF)
+                backoff = min(backoff * 2, MAX_BACKOFF)
+                time.sleep(wait)
+                continue
+            raise
+        except requests.exceptions.RequestException:
+            if attempt < retries:
+                wait = min(backoff, MAX_BACKOFF)
+                backoff = min(backoff * 2, MAX_BACKOFF)
+                time.sleep(wait)
+                continue
+            raise
 
         last_resp = resp
         if resp.status_code < 400:

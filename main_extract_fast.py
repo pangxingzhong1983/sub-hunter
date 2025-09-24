@@ -1,19 +1,30 @@
 from storage.secure import get_secret
 from fetchers.github_adv import search_recent_repos
 from fetchers.gh_files import list_repo_tree, candidate_paths, raw_url
-from filters.extract import fetch_text, extract_candidate_urls
+from filters.extract import fetch_text, extract_candidate_urls, normalize_url
 from filters.deduper import owner_of_repo, pick_one_per_owner, score_link
 from checker.async_check import check_urls
 from storage.history import load_history, save_history, update_all
 
-import asyncio, os, sys, time
+import asyncio, os, sys, time, base64, binascii, string
 
 KEYWORDS = [
     "clash.yaml","clash subscription","free v2ray sub",
     "订阅 转换","免费 节点","v2ray 订阅","free v2ray","free vpn","free clash"
 ]
 
-MAX_REPOS = 10        # 先小批量验证，后续可改为 0=不限
+URL_SUBSTR_BLACKLIST = [
+    "blackmatrix7/ios_rule_script",
+    "domain-filter/",
+    "easylist", "easyprivacy", "easylistchina",
+    "adrules", "adguard",
+    "clashx-pro/distribution_groups",
+    "sub-web.netlify.app",
+    "loyalsoldier/clash-rules",
+    "help.wwkejishe.top/free-shadowrocket",
+]
+
+MAX_REPOS = 100        # 先小批量验证，后续可改为 0=不限
 PRINT_EVERY_REPO = 10  # 每处理多少仓库打一次进度
 PRINT_EVERY_FILE = 50  # 每检查多少文件打一次进度
 
@@ -23,12 +34,15 @@ def gather_candidates(token):
         if visited is None:
             visited = set()
         results = []
-        SUFFIX_DIRECT_SAVE = (".txt", ".yaml", ".yml")
+        SUFFIX_DIRECT_SAVE = (".yaml", ".yml")
         DOMAIN_BLACKLIST = ("www.youtube.com", "youtu.be")
         from urllib.parse import urlparse
         TEXT_EXTS = ('.txt','.yaml','.yml','.md','.json','.conf','.ini','.list')
         SKIP_EXTS = ('.png','.jpg','.jpeg','.svg','.gif','.bmp','.ico','.webp','.pdf','.exe','.apk','.zip','.tar','.gz','.rar','.7z','.mp3','.mp4','.avi','.mov','.mkv','.woff2','.ttf','.otf','.eot')
-        for url in urls:
+        for raw_url_val in urls:
+            url = normalize_url(raw_url_val)
+            if not url:
+                continue
             if url in visited:
                 continue
             visited.add(url)
@@ -74,12 +88,15 @@ def gather_candidates(token):
                     extracted = list(extract_candidate_urls(txt))
                     print(f"[R] url={url} depth={depth} 抽取到新链接数: {len(extracted)}")
                     for u in extracted:
+                        nu = normalize_url(u)
+                        if not nu:
+                            continue
                         results.append({
                             "owner": owner,
                             "src": src,
                             "path": path or url,
-                            "url": u,
-                            "score": score_link(u, path or url),
+                            "url": nu,
+                            "score": score_link(nu, path or url),
                         })
                     if depth > 1:
                         results += recursive_extract(extracted, depth=depth-1, visited=visited, owner=owner, src=src, path=path or url)
@@ -101,12 +118,15 @@ def gather_candidates(token):
                 extracted = list(extract_candidate_urls(txt))
                 print(f"[R] url={url} depth={depth} 抽取到新链接数: {len(extracted)}")
                 for u in extracted:
+                    nu = normalize_url(u)
+                    if not nu:
+                        continue
                     results.append({
                         "owner": owner,
                         "src": src,
                         "path": path or url,
-                        "url": u,
-                        "score": score_link(u, path or url),
+                        "url": nu,
+                        "score": score_link(nu, path or url),
                     })
                 if depth > 1:
                     results += recursive_extract(extracted, depth=depth-1, visited=visited, owner=owner, src=src, path=path or url)
@@ -137,7 +157,11 @@ def gather_candidates(token):
         except Exception:
             pass
         from filters.extract import URL_RE
-        meta_links = set(URL_RE.findall(desc) + URL_RE.findall(readme_txt))
+        meta_links = {
+            normalize_url(u)
+            for u in (URL_RE.findall(desc) + URL_RE.findall(readme_txt))
+            if normalize_url(u)
+        }
         print(f"[D] 仓库:{full} meta页面抽取到链接数:{len(meta_links)}")
         # 递归抓取 meta_links
         found += recursive_extract(meta_links, depth=3, owner=owner_of_repo(full), src=full)
@@ -148,8 +172,9 @@ def gather_candidates(token):
             if file_cnt % PRINT_EVERY_FILE == 0:
                 print(f"[I] 文件进度: {file_cnt} | 已命中链接: {len(found)} | 当前仓库: {full}")
             url = raw_url(full, path)
+            url = normalize_url(url)
             lp = path.lower()
-            if lp.endswith(('.txt','.yaml','.yml')):
+            if lp.endswith(('.yaml', '.yml')):
                 print(f"[D] 仓库:{full} 路径:{path} 直接保存订阅文件URL: {url}")
                 found.append({
                     "owner": owner_of_repo(full),
@@ -159,6 +184,15 @@ def gather_candidates(token):
                     "score": score_link(url, path),
                 })
                 continue
+            if lp.endswith('.txt'):
+                print(f"[D] 仓库:{full} 路径:{path} 保存并递归解析TXT: {url}")
+                found.append({
+                    "owner": owner_of_repo(full),
+                    "src": full,
+                    "path": path,
+                    "url": url,
+                    "score": score_link(url, path),
+                })
             try:
                 txt = fetch_text(url)
             except Exception:
@@ -175,6 +209,68 @@ def gather_candidates(token):
             uniq.append(it); seen.add(it["url"])
     print(f"[I] 去重后链接数: {len(uniq)}")
     return uniq
+
+def _maybe_base64_subscription(text: str) -> bool:
+    cleaned = ''.join(text.strip().split())
+    if len(cleaned) > 8192:
+        trimmed = cleaned[:8192]
+        cleaned = trimmed
+    if len(cleaned) < 16:
+        return False
+
+    allowed = set(string.ascii_letters + string.digits + "+/=_-")
+    ratio = sum(1 for ch in cleaned if ch in allowed) / len(cleaned)
+    if ratio < 0.97:
+        return False
+
+    pad = (-len(cleaned)) % 4
+    candidate = cleaned + ("=" * pad)
+    decoders = (
+        lambda data: base64.b64decode(data, validate=False),
+        lambda data: base64.urlsafe_b64decode(data)
+    )
+    for decoder in decoders:
+        try:
+            decoded = decoder(candidate)
+        except (binascii.Error, ValueError):
+            continue
+        if not decoded:
+            continue
+        lower = decoded.decode("utf-8", "ignore").lower()
+        POSITIVE = ("vmess://", "ss://", "ssr://", "trojan://", "vless://", "hysteria", "tuic")
+        if any(sig in lower for sig in POSITIVE):
+            return True
+    return False
+
+def filter_subscription_content(urls):
+    POSITIVE = ("proxies:", "proxy-groups", "vmess://", "ss://", "ssr://", "trojan://", "vless://", "hysteria", "tuic", "mixed-port", "servers:", "port:")
+    NEGATIVE = ("domain,", "domain-suffix", "domain-keyword", "ip-cidr", "payload:", "rule-set", "rules:")
+    kept = []
+    pending = []
+    for url in urls:
+        try:
+            text = fetch_text(url, timeout=25)
+        except Exception:
+            print(f"[内容获取失败缓存] {url}")
+            pending.append(url)
+            continue
+        snippet = text.strip()
+        if not snippet:
+            print(f"[内容为空剔除] {url}")
+            continue
+        lower = snippet.lower()
+        if any(sig in lower for sig in POSITIVE):
+            kept.append(url)
+            continue
+        if _maybe_base64_subscription(snippet):
+            kept.append(url)
+            continue
+        neg_hits = sum(lower.count(kw) for kw in NEGATIVE)
+        if neg_hits >= 3:
+            print(f"[判定为规则剔除] {url}")
+            continue
+        print(f"[缺少订阅特征剔除] {url}")
+    return kept, pending
 
 def upload_gist_from_file(filepath):
     gid = get_secret("sub-hunter","GIST_ID")
@@ -222,6 +318,18 @@ def main():
     from filters.extract import SUFFIX_WHITELIST
     def is_subscription_url(url):
         last = url.split('/')[-1].split('?')[0].split('#')[0]
+        full_lc = url.lower()
+        if any(sub in full_lc for sub in URL_SUBSTR_BLACKLIST):
+            print(f"[黑名单URL剔除] {url}")
+            return False
+        try:
+            from urllib.parse import urlparse
+            path = urlparse(url).path.lower()
+        except Exception:
+            path = ""
+        if path.endswith("/releases") or path.endswith("/releases/"):
+            print(f"[Releases剔除] {url}")
+            return False
         # 0. 先排除EXCLUDE_SUFFIXES（无论是否有后缀）
         for suf in EXCLUDE_SUFFIXES:
             if last.lower().endswith(suf):
@@ -233,22 +341,33 @@ def main():
             if suf in SUFFIX_WHITELIST:
                 print(f"[机场订阅保留] {url}")
                 return True
-        # 2. 无后缀链接，必须命中英文关键词（关键词为独立单词，避免误判）
-        import re
+        # 2. 无后缀链接，仍需命中关键词（放宽为子串匹配）
         url_lc = url.lower()
         for k in KEYWORDS:
-            # 只保留英文关键词，忽略中文
-            if re.search(rf'\b{k}\b', url_lc) and all(ord(c) < 128 for c in k):
+            k_lc = k.lower()
+            if k_lc in url_lc:
                 print(f"[关键词保留] {url}")
                 return True
         # 3. 其余全部剔除
         print(f"[剔除] {url}")
         return False
-    urls = [it["url"] for it in items if is_subscription_url(it["url"])]
+    urls = []
+    for it in items:
+        nu = normalize_url(it.get("url"))
+        if not nu:
+            continue
+        it["url"] = nu
+        if is_subscription_url(nu):
+            urls.append(nu)
     print(f"[统计] 抓取总数: {len(items)}，筛选后订阅数: {len(urls)}")
 
     hist = load_history()
-    existing = hist.get("seen", []) or []
+    existing_raw = hist.get("seen", []) or []
+    existing = []
+    for u in existing_raw:
+        nu = normalize_url(u)
+        if nu:
+            existing.append(nu)
 
     merged = []
     seen_urls = set()
@@ -267,10 +386,35 @@ def main():
         return
 
     print(">>> 连通性检测…")
-    ok = asyncio.run(check_urls(merged, concurrency=20))
+    ok = asyncio.run(check_urls(merged, concurrency=16))
     print(f"[统计] 可用订阅链接: {len(ok)}")
 
-    all_urls = update_all(hist, ok)
+    filtered_ok, pending = filter_subscription_content(ok)
+    print(f"[统计] 内容校验后保留: {len(filtered_ok)} | 待重试: {len(pending)}")
+
+    if pending:
+        print(">>> 对内容获取失败链接进行二次尝试…")
+        retried_ok = []
+        for url in pending:
+            try:
+                text = fetch_text(url, timeout=45)
+            except Exception:
+                print(f"[二次尝试失败] {url}")
+                continue
+            snippet = text.strip()
+            if not snippet:
+                print(f"[二次尝试内容为空] {url}")
+                continue
+            lower = snippet.lower()
+            if any(sig in lower for sig in ("proxies:", "proxy-groups", "vmess://", "ss://", "ssr://", "trojan://", "vless://", "hysteria", "tuic")) or _maybe_base64_subscription(snippet):
+                retried_ok.append(url)
+            else:
+                print(f"[二次尝试缺少特征] {url}")
+        if retried_ok:
+            print(f"[统计] 二次尝试成功: {len(retried_ok)}")
+            filtered_ok.extend(retried_ok)
+
+    all_urls = update_all(hist, filtered_ok)
     save_history(hist)
     print(f"[统计] 本次全量覆盖: {len(all_urls)} 条")
 
