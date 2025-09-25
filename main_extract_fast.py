@@ -9,8 +9,18 @@ from storage.history import load_history, save_history, update_all
 import asyncio, os, sys, time, base64, binascii, string
 
 KEYWORDS = [
-    "clash.yaml","clash subscription","free v2ray sub",
-    "订阅 转换","免费 节点","v2ray 订阅","free v2ray","free vpn","free clash"
+    # Core English phrases
+    "clash.yaml", "clash subscription", "free v2ray sub", "free clash",
+    "free vpn", "free proxy list", "subscription link", "node share",
+    "trojan subscription", "wireguard subscription", "hysteria subscription",
+    "tuic subscription", "mihomo config", "clash nodes",
+    # Chinese combinations
+    "订阅 转换", "免费 节点", "免费 机场", "机场 节点",
+    "节点 分享", "白嫖 节点", "机场 订阅", "免费 v2ray",
+    "免费 trojan", "免费 vless", "免费 hysteria",
+    "免费 wireguard", "机场 转换", "机场 分享",
+    # Mixed keywords often seen in repos
+    "clash meta", "clash config", "v2ray subscription", "proxy subscription"
 ]
 
 URL_SUBSTR_BLACKLIST = [
@@ -24,7 +34,7 @@ URL_SUBSTR_BLACKLIST = [
     "help.wwkejishe.top/free-shadowrocket",
 ]
 
-MAX_REPOS = 100        # 先小批量验证，后续可改为 0=不限
+MAX_REPOS = 0        # 先小批量验证，后续可改为 0=不限
 PRINT_EVERY_REPO = 10  # 每处理多少仓库打一次进度
 PRINT_EVERY_FILE = 50  # 每检查多少文件打一次进度
 
