@@ -1,0 +1,9 @@
+[Unit]
+Description=Sub-Hunter 每日定时采集
+
+[Timer]
+OnCalendar=*-*-* 17:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,13 @@
+[Unit]
+Description=Sub-Hunter 自动采集服务
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/Users/pangxingzhong/Library/CloudStorage/OneDrive-个人/workspace/sub-hunter
+ExecStart=/Users/pangxingzhong/Library/CloudStorage/OneDrive-个人/workspace/sub-hunter/.venv/bin/python /Users/pangxingzhong/Library/CloudStorage/OneDrive-个人/workspace/sub-hunter/main_extract_fast.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
