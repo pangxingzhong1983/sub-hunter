@@ -5,6 +5,10 @@ MIN_V2_LINKS = int(os.environ.get("MIN_V2_LINKS", "1"))
 MIN_CLASH_PROXIES = int(os.environ.get("MIN_CLASH_PROXIES", "1"))
 MIN_BODY_LENGTH = int(os.environ.get("MIN_BODY_LENGTH", "30"))
 
+# 最小有效 proxies 数量（用于更严格的 YAML 校验）
+MIN_CLASH_VALID_PROXIES = int(os.environ.get("MIN_CLASH_VALID_PROXIES", "2"))
+_KNOWN_PROXY_TYPES = {"vmess","vless","trojan","ss","shadowsocks","socks5","http","hysteria","tuic","ssr"}
+
 # 协议前缀列表，用于快速计数
 _PROTOCOL_PREFIXES = [r"vmess://", r"vless://", r"trojan://", r"ss://", r"ssr://"]
 _HTML_TAG_RE = re.compile(r"<\s*html|<\s*doctype|<\s*head|<\s*body", re.I)
@@ -43,9 +47,53 @@ def _contains_error_message(text: str) -> bool:
     return bool(_ERROR_SIGNS.search(text))
 
 
+def _is_proxy_entry_valid(proxy) -> bool:
+    """判断一个 proxies 的条目是否为真正的代理定义（而非占位/规则/链接）。"""
+    if not proxy:
+        return False
+    # 字符串形式（可能是直接的 vmess:// 或 trojan:// 链接）
+    if isinstance(proxy, str):
+        p = proxy.strip()
+        # 如果包含协议前缀并通过更严格的 vmess 解析，认为有效
+        if p.lower().startswith("vmess://"):
+            return _is_valid_vmess_link_segment(p)
+        if any(p.lower().startswith(pref) for pref in ("vless://","trojan://","ss://","ssr://")):
+            return True
+        return False
+
+    # 字典形式，检查常见字段
+    if isinstance(proxy, dict):
+        # 1) 含有明确地址/主机字段
+        addr = proxy.get("add") or proxy.get("server") or proxy.get("host") or proxy.get("address")
+        port = proxy.get("port")
+        ptype = (proxy.get("type") or "").lower()
+        if addr and port:
+            return True
+        # 2) 若声明了类型且为已知类型，检测是否包含至少一个可用字段
+        if ptype in _KNOWN_PROXY_TYPES:
+            # 对于 vmess/vless/trojan 常见字段检查
+            if ptype in ("vmess","vless","trojan"):
+                if proxy.get("id") or proxy.get("uuid") or proxy.get("ps") or port:
+                    return True
+            # shadowsocks 常见字段
+            if ptype in ("ss","shadowsocks"):
+                if proxy.get("cipher") or proxy.get("password") or addr:
+                    return True
+            # socks/http 只要有端口或地址即可
+            if ptype in ("socks5","http"):
+                if port or addr:
+                    return True
+        # 3) 如果包含一个 url 字段且 url 看起来像订阅或远程 provider，则不视为立即有效代理
+        # 4) 其他情形，认为无效
+        return False
+
+    return False
+
+
 def looks_like_clash_yaml(text: str) -> bool:
     """更严格地判断是否为有效的 Clash YAML 订阅。
-    要求：解析为 dict，包含 proxies/proxy-groups/proxy-providers 其中之一，且 proxies 数量 >= MIN_CLASH_PROXIES。
+    要求：解析为 dict，包含 proxies/proxy-providers 其中之一，且 proxies 数量 >= MIN_CLASH_PROXIES
+    并且在 proxies 内至少有 MIN_CLASH_VALID_PROXIES 个看起来有效的代理定义。
     """
     try:
         data = yaml.safe_load(text)
@@ -54,16 +102,34 @@ def looks_like_clash_yaml(text: str) -> bool:
 
         # 直接含 proxies 的情况
         if "proxies" in data and isinstance(data["proxies"], list):
-            return len(data["proxies"]) >= MIN_CLASH_PROXIES
+            proxies = data["proxies"]
+            if len(proxies) < MIN_CLASH_PROXIES:
+                return False
+            # 计数真正有效的 proxies
+            valid_count = 0
+            for p in proxies:
+                try:
+                    if _is_proxy_entry_valid(p):
+                        valid_count += 1
+                except Exception:
+                    continue
+            return valid_count >= MIN_CLASH_VALID_PROXIES
 
         # proxy-providers 可能是 dict，每个 provider 里可能定义 proxies 或者 provider 会包含 url/proxies 字段
         if "proxy-providers" in data and isinstance(data["proxy-providers"], dict):
-            # 如果任意 provider 的 proxies 字段为非空 list，则视为有效
+            # 如果任意 provider 的 proxies 字段为非空 list 且满足有效条目数要求，则视为有效
             for prov in data["proxy-providers"].values():
-                if isinstance(prov, dict):
-                    if "proxies" in prov and isinstance(prov["proxies"], list) and len(prov["proxies"]) >= MIN_CLASH_PROXIES:
+                if isinstance(prov, dict) and "proxies" in prov and isinstance(prov["proxies"], list):
+                    cnt = 0
+                    for p in prov["proxies"]:
+                        try:
+                            if _is_proxy_entry_valid(p):
+                                cnt += 1
+                        except Exception:
+                            continue
+                    if cnt >= MIN_CLASH_VALID_PROXIES:
                         return True
-            # 不能保证内嵌 proxies 的情况下，仍可被认为是 clash-yaml，但更谨慎返回 False
+            # 如果 providers 只有远程 url，则更谨慎返回 False
             return False
 
         # proxy-groups 存在但不含 proxies 列表时不算有效订阅

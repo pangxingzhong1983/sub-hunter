@@ -23,6 +23,30 @@ proxy-groups:
     assert not validator.looks_like_clash_yaml(yaml)
 
 
+def test_clash_yaml_invalid_proxies_missing_fields():
+    yaml = """
+proxies:
+  - name: node1
+  - name: node2
+"""
+    assert not validator.looks_like_clash_yaml(yaml)
+
+
+def test_clash_yaml_valid_with_add_field():
+    yaml = """
+proxies:
+  - name: node1
+    server: 1.2.3.4
+    port: 443
+    type: vmess
+  - name: node2
+    server: example.com
+    port: 8080
+    type: trojan
+"""
+    assert validator.looks_like_clash_yaml(yaml)
+
+
 def test_v2_text_valid():
     body = "\n".join(["vmess://example1", "trojan://example2", "ss://example3"]) + "\n"*5
     assert validator.looks_like_v2_text(body)
