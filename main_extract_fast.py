@@ -597,7 +597,37 @@ def head_check_urls(urls, concurrency=12, timeout=15):
         ctype = (r.headers.get("content-type") or "").lower()
         # 明确：若 Content-Type 为空，则视为不可接受，直接剔除
         if not ctype:
-            return (u, False, "ctype_empty")
+            # 如果 HEAD 没有返回 content-type，尝试 GET 以避免过度剔除（某些服务器在 HEAD 不提供 headers）
+            try:
+                r_get = session.get(u, allow_redirects=True, stream=True, timeout=timeout)
+                ctype_get = (r_get.headers.get("content-type") or "").lower()
+                if ctype_get:
+                    ctype = ctype_get
+                    r = r_get
+                else:
+                    # 读取少量内容判断是否有订阅特征（vmess://, ss://, proxies:, proxy-groups 等）
+                    try:
+                        snippet = r_get.content[:4096]
+                        text = snippet.decode("utf-8", errors="ignore")
+                        lower = text.lower()
+                        signs = (
+                            "proxies:",
+                            "proxy-groups",
+                            "vmess://",
+                            "ss://",
+                            "ssr://",
+                            "trojan://",
+                            "vless://",
+                            "hysteria",
+                            "tuic",
+                        )
+                        if any(sig in lower for sig in signs) or _maybe_base64_subscription(text):
+                            return (u, True, f"ok_get_content_snippet:{len(text)}")
+                    except Exception:
+                        pass
+                    return (u, False, "ctype_empty")
+            except Exception:
+                return (u, False, "ctype_empty_head_get_fail")
         if ctype:
             if any(ctype.startswith(p) for p in disallow_prefix):
                 return (u, False, f"ctype_disallowed:{ctype}")
@@ -1021,6 +1051,14 @@ def main():
                 # choose top N
                 chosen_urls = [t[0] for t in enriched[:limit]]
                 out.extend(chosen_urls)
+                # count skipped items for reporting
+                skipped_total += max(0, len(items) - len(chosen_urls))
+            else:
+                # Fallback when last-mod sampling is disabled or owner list is not large enough for sampling.
+                # Preserve the first `limit` items in original order to avoid accidental data loss.
+                chosen_urls = [u for u, _ in items[:limit]]
+                out.extend(chosen_urls)
+                skipped_total += max(0, len(items) - len(chosen_urls))
 
         if skipped_total:
             print(f"[裁剪历史] 共跳过 {skipped_total} 条 (每发布者限 {limit})")
