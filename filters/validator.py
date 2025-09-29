@@ -81,14 +81,22 @@ def _is_proxy_entry_valid(proxy) -> bool:
         # 如果包含协议前缀并通过更严格的 vmess 解析，认为有效
         if p.lower().startswith("vmess://"):
             return _is_valid_vmess_link_segment(p)
-        if any(p.lower().startswith(pref) for pref in ("vless://","trojan://","ss://","ssr://")):
+        if any(
+            p.lower().startswith(pref)
+            for pref in ("vless://", "trojan://", "ss://", "ssr://")
+        ):
             return True
         return False
 
     # 字典形式，检查常见字段
     if isinstance(proxy, dict):
         # 1) 含有明确地址/主机字段
-        addr = proxy.get("add") or proxy.get("server") or proxy.get("host") or proxy.get("address")
+        addr = (
+            proxy.get("add")
+            or proxy.get("server")
+            or proxy.get("host")
+            or proxy.get("address")
+        )
         port = proxy.get("port")
         ptype = (proxy.get("type") or "").lower()
         if addr and port:
@@ -99,15 +107,15 @@ def _is_proxy_entry_valid(proxy) -> bool:
             if proxy.get("name"):
                 return True
             # 对于 vmess/vless/trojan 常见字段检查
-            if ptype in ("vmess","vless","trojan"):
+            if ptype in ("vmess", "vless", "trojan"):
                 if proxy.get("id") or proxy.get("uuid") or proxy.get("ps") or port:
                     return True
             # shadowsocks 常见字段
-            if ptype in ("ss","shadowsocks"):
+            if ptype in ("ss", "shadowsocks"):
                 if proxy.get("cipher") or proxy.get("password") or addr:
                     return True
             # socks/http 只要有端口或地址即可
-            if ptype in ("socks5","http"):
+            if ptype in ("socks5", "http"):
                 if port or addr:
                     return True
         # 3) 如果包含一个 url 字段且 url 看起来像订阅或远程 provider，则不视为立即有效代理

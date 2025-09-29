@@ -15,8 +15,10 @@ from urllib.parse import urlparse
 try:
     from filters.extract import normalize_url
 except Exception:
+
     def normalize_url(u):
         return (u or "").strip()
+
 
 import requests
 
@@ -75,7 +77,15 @@ def host_rank(u: str) -> int:
 
 
 def head_check_urls(urls, concurrency=12, timeout=15):
-    allowed_text_indicators = ("text", "json", "yaml", "xml", "plain", "javascript", "x-yaml")
+    allowed_text_indicators = (
+        "text",
+        "json",
+        "yaml",
+        "xml",
+        "plain",
+        "javascript",
+        "x-yaml",
+    )
     disallow_prefix = ("image/", "video/", "audio/")
     session = requests.Session()
     session.headers.update({"User-Agent": "sub-hunter/clean/1.0"})
@@ -139,7 +149,7 @@ def main():
         if len(unique) == 1:
             chosen.append(unique[0])
             continue
-        txts = [u for u in unique if u.lower().endswith('.txt')]
+        txts = [u for u in unique if u.lower().endswith(".txt")]
         if txts:
             chosen.append(txts[0])
             continue
@@ -165,10 +175,12 @@ def main():
         for u, reason in removed:
             f.write(f"{u}\t{reason}\n")
 
-    print(f"original={len(raw)} chosen_after_grouping={len(chosen)} ok_after_head={len(ok)} removed={len(removed)}")
+    print(
+        f"original={len(raw)} chosen_after_grouping={len(chosen)} ok_after_head={len(ok)} removed={len(removed)}"
+    )
     if removed:
         print(f"removed sample: {removed[:8]}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

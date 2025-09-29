@@ -8,6 +8,7 @@ try:
 except ModuleNotFoundError:
     import importlib.util
     import pathlib
+
     p = pathlib.Path(__file__).resolve().parents[1] / "main_extract_fast.py"
     spec = importlib.util.spec_from_file_location("main_extract_fast", str(p))
     mef = importlib.util.module_from_spec(spec)
@@ -47,4 +48,6 @@ def test_trusted_get_verify_rejects_rules(monkeypatch):
 
     ok, reason = mef.trusted_verify_single(url, timeout=2)
     assert ok is False
-    assert reason in ("not_subscription", "empty") or reason.startswith("validator_error")
+    assert reason in ("not_subscription", "empty") or reason.startswith(
+        "validator_error"
+    )

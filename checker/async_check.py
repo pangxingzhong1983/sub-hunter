@@ -60,7 +60,9 @@ async def check_urls(urls, concurrency: int = 12, timeout: int = 8):
     if aiohttp is None:
         # run blocking sync check in executor to keep async API
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, _sync_head_check, urls, concurrency, timeout)
+        return await loop.run_in_executor(
+            None, _sync_head_check, urls, concurrency, timeout
+        )
 
     ok = []
     sem = asyncio.Semaphore(concurrency)

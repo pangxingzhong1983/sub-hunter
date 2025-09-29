@@ -55,8 +55,12 @@ def get_gist_token():
 # 是否启用对受信任 host 在被初步剔除前做一次 GET 验证（可通过环境变量覆盖）
 TRUSTED_GET_VERIFY = os.environ.get("TRUSTED_GET_VERIFY", "1") in ("1", "true", "True")
 # 受信任的 host 列表（以逗号分隔），默认包含常见的 raw CDN/托管域
-_TRUSTED_HOSTS_ENV = os.environ.get("TRUSTED_GET_HOSTS", "raw.githubusercontent.com,cdn.jsdelivr.net,raw.fastgit.org")
-TRUSTED_GET_HOSTS = set(h.strip().lower() for h in _TRUSTED_HOSTS_ENV.split(",") if h.strip())
+_TRUSTED_HOSTS_ENV = os.environ.get(
+    "TRUSTED_GET_HOSTS", "raw.githubusercontent.com,cdn.jsdelivr.net,raw.fastgit.org"
+)
+TRUSTED_GET_HOSTS = set(
+    h.strip().lower() for h in _TRUSTED_HOSTS_ENV.split(",") if h.strip()
+)
 # 并发与超时配置
 TRUSTED_GET_CONCURRENCY = int(os.environ.get("TRUSTED_GET_CONCURRENCY", "6"))
 TRUSTED_GET_TIMEOUT = int(os.environ.get("TRUSTED_GET_TIMEOUT", "10"))

@@ -80,7 +80,11 @@ def update_all(history: dict, items: list[str], path: str = None):
 
 
 def ensure_increment(
-    valid: list, hist_path: str, daily_increment: int, fail_threshold: int, resource_map: dict = None
+    valid: list,
+    hist_path: str,
+    daily_increment: int,
+    fail_threshold: int,
+    resource_map: dict = None,
 ) -> list:
     """按每日增量/失败阈值更新历史并返回最终保留列表。
 
@@ -152,14 +156,20 @@ def ensure_increment(
     # === 按发布者做永久性历史压缩（基于 lastmod 时间优先） ===
     # PER_OWNER_HISTORY_LIMIT: 每个 owner 在历史中保留的最大条数
     per_owner_limit = int(
-        os.environ.get("PER_OWNER_HISTORY_LIMIT", os.environ.get("PER_OWNER_LIMIT", "5"))
+        os.environ.get(
+            "PER_OWNER_HISTORY_LIMIT", os.environ.get("PER_OWNER_LIMIT", "5")
+        )
     )
     if per_owner_limit > 0:
         # 构建 owner -> [ (url, lastmod_ts) ] 映射
         owner_map = {}
         for u in list(final):
             meta = resource_keys.get(u) or {}
-            owner_key = meta.get("owner_key") or (resource_map.get(u) or {}).get("owner_key") or u
+            owner_key = (
+                meta.get("owner_key")
+                or (resource_map.get(u) or {}).get("owner_key")
+                or u
+            )
             # lastmod 支持多个来源：resource_keys cache 优先，其次 resource_map
             lastmod = None
             try:
@@ -197,7 +207,9 @@ def ensure_increment(
             # Note: we do not decrement last_total here because last_total reflects final length
             # but we update last_total below when writing.
             # 将 resource_keys 中被移除的项保留（以便后续复原或审计）
-            print(f"[历史压缩] 根据 lastmod 每发布者保留 {per_owner_limit} 条，移除 {len(to_remove)} 条至 reserve")
+            print(
+                f"[历史压缩] 根据 lastmod 每发布者保留 {per_owner_limit} 条，移除 {len(to_remove)} 条至 reserve"
+            )
 
     # 3) 更新历史结构并写回
     hist["seen"] = final
@@ -222,7 +234,9 @@ def ensure_increment(
     # export reserve list for audit
     try:
         if hist.get("reserve"):
-            reserve_path = os.path.join(os.path.dirname(hist_path) or ".", f"reserve-{int(time.time())}.json")
+            reserve_path = os.path.join(
+                os.path.dirname(hist_path) or ".", f"reserve-{int(time.time())}.json"
+            )
             with open(reserve_path, "w", encoding="utf-8") as rf:
                 json.dump(hist.get("reserve", []), rf, ensure_ascii=False, indent=2)
             print(f"[历史保留导出] 已导出 reserve 到: {reserve_path}")

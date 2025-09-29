@@ -8,7 +8,14 @@ import time
 from urllib.parse import urlparse
 
 from checker.async_check import check_urls
-from config import DAILY_INCREMENT, FAIL_THRESHOLD, HIST_PATH, TRUSTED_GET_VERIFY, TRUSTED_GET_HOSTS, TRUSTED_GET_TIMEOUT
+from config import (
+    DAILY_INCREMENT,
+    FAIL_THRESHOLD,
+    HIST_PATH,
+    TRUSTED_GET_VERIFY,
+    TRUSTED_GET_HOSTS,
+    TRUSTED_GET_TIMEOUT,
+)
 from fetchers.gh_files import candidate_paths, list_repo_tree, raw_url
 from fetchers.github_adv import search_recent_repos
 from filters.deduper import owner_of_repo, score_link
@@ -558,7 +565,15 @@ def head_check_urls(urls, concurrency=12, timeout=15):
     import concurrent.futures
     import requests
 
-    allowed_text_indicators = ("text", "json", "yaml", "xml", "plain", "javascript", "x-yaml")
+    allowed_text_indicators = (
+        "text",
+        "json",
+        "yaml",
+        "xml",
+        "plain",
+        "javascript",
+        "x-yaml",
+    )
     disallow_prefix = ("image/", "video/", "audio/")
 
     session = requests.Session()
@@ -903,9 +918,15 @@ def main():
     def prune_merged_by_owner(merged_list, hist, limit: int):
         res_keys = hist.get("resource_keys", {}) or {}
         # env controls for last-mod sampling during pruning
-        PRUNE_LASTMOD_ENABLE = os.environ.get("PRUNE_LASTMOD_ENABLE", "1") in ("1", "true", "True")
+        PRUNE_LASTMOD_ENABLE = os.environ.get("PRUNE_LASTMOD_ENABLE", "1") in (
+            "1",
+            "true",
+            "True",
+        )
         PRUNE_LASTMOD_SAMPLE = int(os.environ.get("PRUNE_LASTMOD_SAMPLE", "10"))
-        PRUNE_LASTMOD_CONCURRENCY = int(os.environ.get("PRUNE_LASTMOD_CONCURRENCY", "6"))
+        PRUNE_LASTMOD_CONCURRENCY = int(
+            os.environ.get("PRUNE_LASTMOD_CONCURRENCY", "6")
+        )
         PRUNE_LASTMOD_TIMEOUT = int(os.environ.get("PRUNE_LASTMOD_TIMEOUT", "6"))
         OWNER_LASTMOD_TRIGGER = int(os.environ.get("OWNER_LASTMOD_TRIGGER", "20"))
 
@@ -962,7 +983,11 @@ def main():
                 if to_sample:
                     # avoid re-sampling same URL globally in this run
                     try:
-                        lm_map = sample_last_modified(to_sample, concurrency=PRUNE_LASTMOD_CONCURRENCY, timeout=PRUNE_LASTMOD_TIMEOUT)
+                        lm_map = sample_last_modified(
+                            to_sample,
+                            concurrency=PRUNE_LASTMOD_CONCURRENCY,
+                            timeout=PRUNE_LASTMOD_TIMEOUT,
+                        )
                     except Exception as e:
                         print(f"[LastMod采样异常] {e}")
                         lm_map = {}
@@ -1065,7 +1090,10 @@ def main():
         u0 = normalize_url(entry.get("url") or "")
         if not u0:
             continue
-        cand_map[u0] = {"owner": entry.get("owner") or "__no_owner__", "path": entry.get("path") or u0}
+        cand_map[u0] = {
+            "owner": entry.get("owner") or "__no_owner__",
+            "path": entry.get("path") or u0,
+        }
 
     def strip_known_ext(u: str) -> str:
         low = u.lower()
@@ -1098,7 +1126,11 @@ def main():
     for u in filtered_ok:
         orig = u
         canon = canonicalize_url(orig)
-        meta = cand_map.get(normalize_url(orig)) or cand_map.get(normalize_url(canon)) or {"owner": "__no_owner__", "path": orig}
+        meta = (
+            cand_map.get(normalize_url(orig))
+            or cand_map.get(normalize_url(canon))
+            or {"owner": "__no_owner__", "path": orig}
+        )
         owner = meta.get("owner") or "__no_owner__"
         base = strip_known_ext(canon)
         groups.setdefault((owner, base), []).append(canon)
@@ -1111,7 +1143,7 @@ def main():
             chosen.append(lst[0])
             continue
         # 优先 .txt
-        txts = [v for v in lst if v.lower().endswith('.txt')]
+        txts = [v for v in lst if v.lower().endswith(".txt")]
         if txts:
             chosen.append(txts[0])
             for v in lst:
@@ -1151,7 +1183,9 @@ def main():
         resource_map[u] = {"owner_key": owner_key, "base": base}
 
     # 写回历史与输出（把 resource_map 传入 ensure_increment）
-    all_urls = ensure_increment(ok_head, HIST_PATH, DAILY_INCREMENT, FAIL_THRESHOLD, resource_map=resource_map)
+    all_urls = ensure_increment(
+        ok_head, HIST_PATH, DAILY_INCREMENT, FAIL_THRESHOLD, resource_map=resource_map
+    )
     print(f"[统计] 本次全量覆盖: {len(all_urls)} 条")
 
     os.makedirs("output", exist_ok=True)
@@ -1292,5 +1326,5 @@ def sample_last_modified(urls, concurrency=8, timeout=6):
 
 
 # Ensure script entrypoint exists so running the file executes main()
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
