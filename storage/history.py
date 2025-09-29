@@ -4,6 +4,14 @@ import time
 
 HIST_FILE = "storage/history.json"
 
+# Control automatic history backups. Default: disabled to avoid unexpected .bak files.
+# To enable backups set environment variable ENABLE_HISTORY_BACKUP=true
+ENABLE_HISTORY_BACKUP = os.environ.get("ENABLE_HISTORY_BACKUP", "false").lower() in (
+    "1",
+    "true",
+    "yes",
+)
+
 
 def load_history(path: str = None):
     """读取历史文件，path 为空时使用模块默认 HIST_FILE。
@@ -222,12 +230,16 @@ def ensure_increment(
 
     # backup existing history before overwrite
     try:
-        if os.path.exists(hist_path):
-            bak_path = f"{hist_path}.bak.{int(time.time())}"
-            import shutil
+        if ENABLE_HISTORY_BACKUP:
+            if os.path.exists(hist_path):
+                bak_path = f"{hist_path}.bak.{int(time.time())}"
+                import shutil
 
-            shutil.copy2(hist_path, bak_path)
-            print(f"[历史备份] 已备份原 history 到: {bak_path}")
+                shutil.copy2(hist_path, bak_path)
+                print(f"[历史备份] 已备份原 history 到: {bak_path}")
+        else:
+            # backups disabled by configuration to avoid cluttering the data directory
+            pass
     except Exception as e:
         print(f"[历史备份失败] {e}")
     save_history(hist, hist_path)
