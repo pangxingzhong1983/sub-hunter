@@ -599,7 +599,9 @@ def head_check_urls(urls, concurrency=12, timeout=15):
         if not ctype:
             # 如果 HEAD 没有返回 content-type，尝试 GET 以避免过度剔除（某些服务器在 HEAD 不提供 headers）
             try:
-                r_get = session.get(u, allow_redirects=True, stream=True, timeout=timeout)
+                r_get = session.get(
+                    u, allow_redirects=True, stream=True, timeout=timeout
+                )
                 ctype_get = (r_get.headers.get("content-type") or "").lower()
                 if ctype_get:
                     ctype = ctype_get
@@ -621,7 +623,9 @@ def head_check_urls(urls, concurrency=12, timeout=15):
                             "hysteria",
                             "tuic",
                         )
-                        if any(sig in lower for sig in signs) or _maybe_base64_subscription(text):
+                        if any(
+                            sig in lower for sig in signs
+                        ) or _maybe_base64_subscription(text):
                             return (u, True, f"ok_get_content_snippet:{len(text)}")
                     except Exception:
                         pass
