@@ -4,7 +4,8 @@ from fetchers.gh_files import list_repo_tree, candidate_paths, raw_url
 from filters.extract import fetch_text, extract_candidate_urls, normalize_url
 from filters.deduper import owner_of_repo, pick_one_per_owner, score_link
 from checker.async_check import check_urls
-from storage.history import load_history, save_history, update_all
+from storage.history import load_history, save_history, update_all, ensure_increment
+from config import HIST_PATH, DAILY_INCREMENT, FAIL_THRESHOLD
 
 import asyncio, os, sys, time, base64, binascii, string
 
@@ -371,7 +372,7 @@ def main():
             urls.append(nu)
     print(f"[统计] 抓取总数: {len(items)}，筛选后订阅数: {len(urls)}")
 
-    hist = load_history()
+    hist = load_history(HIST_PATH)
     existing_raw = hist.get("seen", []) or []
     existing = []
     for u in existing_raw:
@@ -424,8 +425,8 @@ def main():
             print(f"[统计] 二次尝试成功: {len(retried_ok)}")
             filtered_ok.extend(retried_ok)
 
-    all_urls = update_all(hist, filtered_ok)
-    save_history(hist)
+    # 使用 ensure_increment 对历史进行每日增量/淘汰处理并写回统一的 hist_path
+    all_urls = ensure_increment(filtered_ok, HIST_PATH, DAILY_INCREMENT, FAIL_THRESHOLD)
     print(f"[统计] 本次全量覆盖: {len(all_urls)} 条")
 
     os.makedirs("output", exist_ok=True)
