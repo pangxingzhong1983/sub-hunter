@@ -7,7 +7,7 @@ KEYWORDS = [
 ]
 
 MAX_WORKERS   = int(os.environ.get("MAX_WORKERS", "20"))
-DAILY_INCREMENT = int(os.environ.get("DAILY_INCREMENT", "10"))
+DAILY_INCREMENT = int(os.environ.get("DAILY_INCREMENT", "0"))
 FAIL_THRESHOLD  = int(os.environ.get("FAIL_THRESHOLD", "3"))
 
 OUT_DIR   = os.path.abspath(os.environ.get("OUT_DIR", "./data"))

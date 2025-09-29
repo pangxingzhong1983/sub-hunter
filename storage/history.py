@@ -103,9 +103,15 @@ def ensure_increment(valid: list, hist_path: str, daily_increment: int, fail_thr
 
     # 2) 新增的有效链接按 daily_increment 限额追加
     to_add = []
-    for u in valid_set:
-        if u not in final and len(to_add) < daily_increment:
-            to_add.append(u)
+    if int(daily_increment) <= 0:
+        # 不限制每日增量，直接把所有新的有效链接追加
+        for u in valid_set:
+            if u not in final:
+                to_add.append(u)
+    else:
+        for u in valid_set:
+            if u not in final and len(to_add) < int(daily_increment):
+                to_add.append(u)
     final.extend(to_add)
 
     # 3) 更新历史结构并写回

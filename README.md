@@ -10,6 +10,7 @@
 - `ENABLE_SAMPLE_NODE_CHECK`（默认 0）: 是否开启样本节点连通性检测（0/1）
 - `SAMPLE_NODE_CHECK_COUNT`（默认 1）: 抽取并检测的样本节点数
 - `SAMPLE_NODE_CHECK_TIMEOUT`（默认 2）: 节点连通性检测超时时间（秒）
+- `DAILY_INCREMENT`（默认 0）: 每日新增导入数量限制（0 表示不限制）
 
 示例：在运行前通过环境变量启用样本检测并设置阈值：
 
@@ -19,6 +20,8 @@ export SAMPLE_NODE_CHECK_COUNT=2
 export MIN_V2_LINKS=2
 python main.py
 ```
+
+注：将 DAILY_INCREMENT 设为 0 表示不限制每日新增导入（默认现在为 0，表示无增量限制）。
 
 测试
 
