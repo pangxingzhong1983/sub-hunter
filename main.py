@@ -31,8 +31,15 @@ def validate_contents(urls:list[str]) -> list[str]:
     for u in urls:
         try:
             r = http_get(u, timeout=12)
-            if r.status_code < 400 and is_valid_subscription(u, r.text):
-                ok.append(u)
+            if r.status_code < 400:
+                # 先基于 Content-Type 做快速排除，减少对 HTML 登录页/错误页的误判
+                ct = (r.headers.get("Content-Type") or "").lower()
+                body = r.text or ""
+                if "text/html" in ct and "proxies" not in body.lower() and not any(p in body.lower() for p in ("vmess://","vless://","trojan://","ss://","ssr://")):
+                    continue
+
+                if is_valid_subscription(u, body):
+                    ok.append(u)
         except Exception:
             pass
     return ok
