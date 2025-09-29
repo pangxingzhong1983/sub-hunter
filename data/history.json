@@ -1,140 +1,72 @@
 {
   "seen": [
-    "https://raw.githubusercontent.com/Leon406/SubCrawler/master/sub/share/hysteria2",
-    "https://raw.githubusercontent.com/xyfqzy/free-nodes/main/nodes/clash.yaml",
-    "https://raw.githubusercontent.com/barry-far/V2ray-config/main/All_Configs_base64_Sub.txt",
-    "https://raw.githubusercontent.com/ermaozi/get_subscribe/main/subscribe/clash.yml",
-    "https://raw.githubusercontent.com/Leon406/SubCrawler/master/sub/share/vless",
-    "https://raw.githubusercontent.com/kismetpro/NodeSuber/main/out/All_Configs_Sub.txt",
-    "https://raw.githubusercontent.com/chengaopan/AutoMergePublicNodes/master/list.meta.yml",
-    "https://raw.githubusercontent.com/sakha1370/OpenRay/refs/heads/main/output/all_valid_proxies.txt",
+    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/base64/vless",
+    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/normal/reality",
     "https://raw.githubusercontent.com/Pawdroid/Free-servers/main/sub",
-    "https://raw.githubusercontent.com/Huibq/TrojanLinks/master/links/trojan",
-    "https://raw.githubusercontent.com/chengaopan/AutoMergePublicNodes/master/list.yml",
-    "https://raw.githubusercontent.com/lihungbin/Auto_Update_Sub/HEAD/sub_tested.yaml",
-    "https://raw.githubusercontent.com/ShatakVPN/ConfigForge-V2Ray/refs/heads/main/configs/all.txt",
-    "https://raw.githubusercontent.com/snakem982/proxypool/main/source/clash-meta-2.yaml",
-    "https://raw.githubusercontent.com/ripaojiedian/freenode/main/clash",
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/base64/trojan",
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/meta/vless",
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/meta/trojan",
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/base64/reality",
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/normal/ss",
-    "https://www.sockscap64.com/forums/topic/sscap%E9%85%8D%E7%BD%AE%E6%95%99%E7%A8%8B/"
+    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/meta/ss",
+    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/clash/trojan",
+    "https://www.sockscap64.com/forums/topic/sscap%E9%85%8D%E7%BD%AE%E6%95%99%E7%A8%8B/",
+    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/normal/mix",
+    "https://clash.crossxx.com/sub/hysteria/1759161603",
+    "https://clash.crossxx.com/sub/vmess/1759161603",
+    "https://clash.crossxx.com/sub/ssr/1759161603"
   ],
   "links": [
-    "https://raw.githubusercontent.com/Leon406/SubCrawler/master/sub/share/hysteria2",
-    "https://raw.githubusercontent.com/xyfqzy/free-nodes/main/nodes/clash.yaml",
-    "https://raw.githubusercontent.com/barry-far/V2ray-config/main/All_Configs_base64_Sub.txt",
-    "https://raw.githubusercontent.com/ermaozi/get_subscribe/main/subscribe/clash.yml",
-    "https://raw.githubusercontent.com/Leon406/SubCrawler/master/sub/share/vless",
-    "https://raw.githubusercontent.com/kismetpro/NodeSuber/main/out/All_Configs_Sub.txt",
-    "https://raw.githubusercontent.com/chengaopan/AutoMergePublicNodes/master/list.meta.yml",
-    "https://raw.githubusercontent.com/sakha1370/OpenRay/refs/heads/main/output/all_valid_proxies.txt",
+    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/base64/vless",
+    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/normal/reality",
     "https://raw.githubusercontent.com/Pawdroid/Free-servers/main/sub",
-    "https://raw.githubusercontent.com/Huibq/TrojanLinks/master/links/trojan",
-    "https://raw.githubusercontent.com/chengaopan/AutoMergePublicNodes/master/list.yml",
-    "https://raw.githubusercontent.com/lihungbin/Auto_Update_Sub/HEAD/sub_tested.yaml",
-    "https://raw.githubusercontent.com/ShatakVPN/ConfigForge-V2Ray/refs/heads/main/configs/all.txt",
-    "https://raw.githubusercontent.com/snakem982/proxypool/main/source/clash-meta-2.yaml",
-    "https://raw.githubusercontent.com/ripaojiedian/freenode/main/clash",
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/base64/trojan",
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/meta/vless",
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/meta/trojan",
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/base64/reality",
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/normal/ss",
-    "https://www.sockscap64.com/forums/topic/sscap%E9%85%8D%E7%BD%AE%E6%95%99%E7%A8%8B/"
+    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/meta/ss",
+    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/clash/trojan",
+    "https://www.sockscap64.com/forums/topic/sscap%E9%85%8D%E7%BD%AE%E6%95%99%E7%A8%8B/",
+    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/normal/mix",
+    "https://clash.crossxx.com/sub/hysteria/1759161603",
+    "https://clash.crossxx.com/sub/vmess/1759161603",
+    "https://clash.crossxx.com/sub/ssr/1759161603"
   ],
-  "last_total": 21,
-  "ts": 1759163441,
-  "fail": {
-    "https://raw.githubusercontent.com/lihungbin/Auto_Update_Sub/HEAD/sub_tested.yaml": 2
-  },
+  "last_total": 10,
+  "ts": 1759166251,
+  "fail": {},
   "reserve": [],
   "resource_keys": {
-    "https://raw.githubusercontent.com/Leon406/SubCrawler/master/sub/share/hysteria2": {
-      "owner_key": "Leon406/SubCrawler",
-      "base": "master/sub/share/hysteria2"
+    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/base64/vless": {
+      "owner_key": "sinavm/SVM",
+      "base": "main/subscriptions/xray/base64/vless"
     },
-    "https://raw.githubusercontent.com/xyfqzy/free-nodes/main/nodes/clash.yaml": {
-      "owner_key": "xyfqzy/free-nodes",
-      "base": "main/nodes/clash"
-    },
-    "https://raw.githubusercontent.com/barry-far/V2ray-config/main/All_Configs_base64_Sub.txt": {
-      "owner_key": "barry-far/V2ray-config",
-      "base": "main/All_Configs_base64_Sub"
-    },
-    "https://raw.githubusercontent.com/ermaozi/get_subscribe/main/subscribe/clash.yml": {
-      "owner_key": "ermaozi/get_subscribe",
-      "base": "main/subscribe/clash"
-    },
-    "https://raw.githubusercontent.com/Leon406/SubCrawler/master/sub/share/vless": {
-      "owner_key": "Leon406/SubCrawler",
-      "base": "master/sub/share/vless"
-    },
-    "https://raw.githubusercontent.com/kismetpro/NodeSuber/main/out/All_Configs_Sub.txt": {
-      "owner_key": "kismetpro/NodeSuber",
-      "base": "main/out/All_Configs_Sub"
-    },
-    "https://raw.githubusercontent.com/chengaopan/AutoMergePublicNodes/master/list.meta.yml": {
-      "owner_key": "chengaopan/AutoMergePublicNodes",
-      "base": "master/list.meta"
-    },
-    "https://raw.githubusercontent.com/sakha1370/OpenRay/refs/heads/main/output/all_valid_proxies.txt": {
-      "owner_key": "sakha1370/OpenRay",
-      "base": "refs/heads/main/output/all_valid_proxies"
+    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/normal/reality": {
+      "owner_key": "sinavm/SVM",
+      "base": "main/subscriptions/xray/normal/reality"
     },
     "https://raw.githubusercontent.com/Pawdroid/Free-servers/main/sub": {
       "owner_key": "Pawdroid/Free-servers",
       "base": "main/sub"
     },
-    "https://raw.githubusercontent.com/Huibq/TrojanLinks/master/links/trojan": {
-      "owner_key": "Huibq/TrojanLinks",
-      "base": "master/links/trojan"
-    },
-    "https://raw.githubusercontent.com/chengaopan/AutoMergePublicNodes/master/list.yml": {
-      "owner_key": "chengaopan/AutoMergePublicNodes",
-      "base": "master/list"
-    },
-    "https://raw.githubusercontent.com/lihungbin/Auto_Update_Sub/HEAD/sub_tested.yaml": {
-      "owner_key": "lihungbin/Auto_Update_Sub",
-      "base": "HEAD/sub_tested"
-    },
-    "https://raw.githubusercontent.com/ShatakVPN/ConfigForge-V2Ray/refs/heads/main/configs/all.txt": {
-      "owner_key": "ShatakVPN/ConfigForge-V2Ray",
-      "base": "refs/heads/main/configs/all"
-    },
-    "https://raw.githubusercontent.com/snakem982/proxypool/main/source/clash-meta-2.yaml": {
-      "owner_key": "snakem982/proxypool",
-      "base": "main/source/clash-meta-2"
-    },
-    "https://raw.githubusercontent.com/ripaojiedian/freenode/main/clash": {
-      "owner_key": "ripaojiedian/freenode",
-      "base": "main/clash"
-    },
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/base64/trojan": {
+    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/meta/ss": {
       "owner_key": "sinavm/SVM",
-      "base": "main/subscriptions/xray/base64/trojan"
+      "base": "main/subscriptions/meta/ss"
     },
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/meta/vless": {
+    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/clash/trojan": {
       "owner_key": "sinavm/SVM",
-      "base": "main/subscriptions/meta/vless"
-    },
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/meta/trojan": {
-      "owner_key": "sinavm/SVM",
-      "base": "main/subscriptions/meta/trojan"
-    },
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/base64/reality": {
-      "owner_key": "sinavm/SVM",
-      "base": "main/subscriptions/xray/base64/reality"
-    },
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/normal/ss": {
-      "owner_key": "sinavm/SVM",
-      "base": "main/subscriptions/xray/normal/ss"
+      "base": "main/subscriptions/clash/trojan"
     },
     "https://www.sockscap64.com/forums/topic/sscap%E9%85%8D%E7%BD%AE%E6%95%99%E7%A8%8B/": {
       "owner_key": "topv2raynode",
       "base": "forums/topic/sscap%E9%85%8D%E7%BD%AE%E6%95%99%E7%A8%8B/"
+    },
+    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/normal/mix": {
+      "owner_key": "sinavm/SVM",
+      "base": "main/subscriptions/xray/normal/mix"
+    },
+    "https://clash.crossxx.com/sub/hysteria/1759161603": {
+      "owner_key": "crossxx-labs",
+      "base": "sub/hysteria/1759161603"
+    },
+    "https://clash.crossxx.com/sub/vmess/1759161603": {
+      "owner_key": "crossxx-labs",
+      "base": "sub/vmess/1759161603"
+    },
+    "https://clash.crossxx.com/sub/ssr/1759161603": {
+      "owner_key": "crossxx-labs",
+      "base": "sub/ssr/1759161603"
     }
   }
 }
