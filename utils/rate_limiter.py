@@ -1,7 +1,11 @@
-import time, threading, random
+import random
+import threading
+import time
 from collections import defaultdict
 from typing import Dict
-from config.rate_limits import PLANS, DEFAULT
+
+from config.rate_limits import DEFAULT, PLANS
+
 
 class _TokenBucket:
     def __init__(self, rate_per_minute: int, burst: int):
@@ -27,6 +31,7 @@ class _TokenBucket:
             wait = need / self.refill_rate
             self.tokens = 0.0
             return max(0.0, wait)
+
 
 class RateLimiter:
     def __init__(self):
@@ -54,5 +59,6 @@ class RateLimiter:
         if sleep_s > 0:
             time.sleep(sleep_s)
         self._last_ts[host] = time.monotonic()
+
 
 limiter = RateLimiter()

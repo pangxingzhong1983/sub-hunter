@@ -18,9 +18,7 @@
     "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/base64/trojan",
     "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/meta/vless",
     "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/meta/trojan",
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/base64/reality",
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/normal/ss",
-    "https://www.sockscap64.com/forums/topic/sscap%E9%85%8D%E7%BD%AE%E6%95%99%E7%A8%8B/"
+    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/base64/reality"
   ],
   "links": [
     "https://raw.githubusercontent.com/Leon406/SubCrawler/master/sub/share/hysteria2",
@@ -41,14 +39,12 @@
     "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/base64/trojan",
     "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/meta/vless",
     "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/meta/trojan",
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/base64/reality",
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/normal/ss",
-    "https://www.sockscap64.com/forums/topic/sscap%E9%85%8D%E7%BD%AE%E6%95%99%E7%A8%8B/"
+    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/base64/reality"
   ],
-  "last_total": 21,
-  "ts": 1759163441,
+  "last_total": 19,
+  "ts": 1759159849,
   "fail": {
-    "https://raw.githubusercontent.com/lihungbin/Auto_Update_Sub/HEAD/sub_tested.yaml": 2
+    "https://raw.githubusercontent.com/lihungbin/Auto_Update_Sub/HEAD/sub_tested.yaml": 1
   },
   "reserve": [],
   "resource_keys": {
@@ -127,14 +123,6 @@
     "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/base64/reality": {
       "owner_key": "sinavm/SVM",
       "base": "main/subscriptions/xray/base64/reality"
-    },
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/normal/ss": {
-      "owner_key": "sinavm/SVM",
-      "base": "main/subscriptions/xray/normal/ss"
-    },
-    "https://www.sockscap64.com/forums/topic/sscap%E9%85%8D%E7%BD%AE%E6%95%99%E7%A8%8B/": {
-      "owner_key": "topv2raynode",
-      "base": "forums/topic/sscap%E9%85%8D%E7%BD%AE%E6%95%99%E7%A8%8B/"
     }
   }
 }
