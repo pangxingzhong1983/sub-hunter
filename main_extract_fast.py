@@ -12,9 +12,9 @@ from config import (
     DAILY_INCREMENT,
     FAIL_THRESHOLD,
     HIST_PATH,
-    TRUSTED_GET_VERIFY,
     TRUSTED_GET_HOSTS,
     TRUSTED_GET_TIMEOUT,
+    TRUSTED_GET_VERIFY,
 )
 from fetchers.gh_files import candidate_paths, list_repo_tree, raw_url
 from fetchers.github_adv import search_recent_repos
@@ -563,6 +563,7 @@ def canonicalize_url(url: str) -> str:
 # 新增：并发 HEAD 检查（回退到 GET），剔除非 2xx 或 content-type 明显非文本的 URL
 def head_check_urls(urls, concurrency=12, timeout=15):
     import concurrent.futures
+
     import requests
 
     allowed_text_indicators = (
@@ -1294,6 +1295,7 @@ def sample_last_modified(urls, concurrency=8, timeout=6):
     返回 dict: url -> unix_ts 或 None
     """
     import concurrent.futures
+
     import requests
 
     sess = requests.Session()

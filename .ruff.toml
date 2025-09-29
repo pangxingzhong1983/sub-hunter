@@ -1,5 +1,7 @@
 # Temporary ruff configuration to relax rules and unblock CI while we iteratively fix code quality issues.
 # Use top-level keys (no [tool.ruff] header) because .ruff.toml expects top-level configuration.
+
+[lint]
 extend-ignore = [
   "C901",  # complexity (functions too complex)
   "N806",  # variable in function should be lowercase

@@ -1,7 +1,3 @@
-import os
-
-import pytest
-
 # 尝试直接导入 main_extract_fast；若失败则按文件路径动态加载，确保在各种 pytest/PYTHONPATH 环境下都能运行
 try:
     import main_extract_fast as mef

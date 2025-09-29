@@ -22,6 +22,7 @@ async def _check_one(session: Any, url: str, timeout: int = 8) -> bool:
 def _sync_head_check(urls, concurrency: int = 12, timeout: int = 8):
     # Fallback when aiohttp is not available: use requests in threads
     import concurrent.futures
+
     import requests
 
     ok = []
