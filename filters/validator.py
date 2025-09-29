@@ -1,4 +1,10 @@
-import base64, yaml, re, json, os, socket
+import base64
+import json
+import os
+import re
+import socket
+
+import yaml
 
 # 可调阈值（环境变量覆盖）
 MIN_V2_LINKS = int(os.environ.get("MIN_V2_LINKS", "1"))
@@ -7,15 +13,33 @@ MIN_BODY_LENGTH = int(os.environ.get("MIN_BODY_LENGTH", "30"))
 
 # 最小有效 proxies 数量（用于更严格的 YAML 校验）
 MIN_CLASH_VALID_PROXIES = int(os.environ.get("MIN_CLASH_VALID_PROXIES", "2"))
-_KNOWN_PROXY_TYPES = {"vmess","vless","trojan","ss","shadowsocks","socks5","http","hysteria","tuic","ssr"}
+_KNOWN_PROXY_TYPES = {
+    "vmess",
+    "vless",
+    "trojan",
+    "ss",
+    "shadowsocks",
+    "socks5",
+    "http",
+    "hysteria",
+    "tuic",
+    "ssr",
+}
 
 # 协议前缀列表，用于快速计数
 _PROTOCOL_PREFIXES = [r"vmess://", r"vless://", r"trojan://", r"ss://", r"ssr://"]
 _HTML_TAG_RE = re.compile(r"<\s*html|<\s*doctype|<\s*head|<\s*body", re.I)
-_ERROR_SIGNS = re.compile(r"(404\s+not\s+found|page\s+not\s+found|access\s+denied|403\s+forbidden|captcha|sign\s*in|required\s*login|permission\s+denied)", re.I)
+_ERROR_SIGNS = re.compile(
+    r"(404\s+not\s+found|page\s+not\s+found|access\s+denied|403\s+forbidden|captcha|sign\s*in|required\s*login|permission\s+denied)",
+    re.I,
+)
 
 # 样本连通性检测开关与参数（环境变量控制）
-ENABLE_SAMPLE_NODE_CHECK = os.environ.get("ENABLE_SAMPLE_NODE_CHECK", "0") in ("1", "true", "True")
+ENABLE_SAMPLE_NODE_CHECK = os.environ.get("ENABLE_SAMPLE_NODE_CHECK", "0") in (
+    "1",
+    "true",
+    "True",
+)
 SAMPLE_NODE_CHECK_COUNT = int(os.environ.get("SAMPLE_NODE_CHECK_COUNT", "1"))
 SAMPLE_NODE_CHECK_TIMEOUT = int(os.environ.get("SAMPLE_NODE_CHECK_TIMEOUT", "2"))
 
@@ -71,6 +95,9 @@ def _is_proxy_entry_valid(proxy) -> bool:
             return True
         # 2) 若声明了类型且为已知类型，检测是否包含至少一个可用字段
         if ptype in _KNOWN_PROXY_TYPES:
+            # 如果条目至少包含 `name` 和 `type`，视为最小合法代理定义（兼容历史最小条目）
+            if proxy.get("name"):
+                return True
             # 对于 vmess/vless/trojan 常见字段检查
             if ptype in ("vmess","vless","trojan"):
                 if proxy.get("id") or proxy.get("uuid") or proxy.get("ps") or port:
@@ -119,7 +146,11 @@ def looks_like_clash_yaml(text: str) -> bool:
         if "proxy-providers" in data and isinstance(data["proxy-providers"], dict):
             # 如果任意 provider 的 proxies 字段为非空 list 且满足有效条目数要求，则视为有效
             for prov in data["proxy-providers"].values():
-                if isinstance(prov, dict) and "proxies" in prov and isinstance(prov["proxies"], list):
+                if (
+                    isinstance(prov, dict)
+                    and "proxies" in prov
+                    and isinstance(prov["proxies"], list)
+                ):
                     cnt = 0
                     for p in prov["proxies"]:
                         try:
@@ -160,7 +191,11 @@ def looks_like_b64_subscription(text: str) -> bool:
         raw = base64.b64decode(text.strip(), validate=False)
         decoded = raw.decode(errors="ignore")
         # 如果解码后是 YAML，优先使用 YAML 检查
-        if decoded.strip().startswith("{") or decoded.strip().startswith("-") or "proxies" in decoded:
+        if (
+            decoded.strip().startswith("{")
+            or decoded.strip().startswith("-")
+            or "proxies" in decoded
+        ):
             if looks_like_clash_yaml(decoded):
                 return True
         # 排除明显的 HTML 或错误页面
@@ -209,7 +244,11 @@ def is_valid_subscription(url: str, body: str) -> bool:
             return False
 
         # 默认更严格：只有当 body 明显包含协议时才通过
-        if looks_like_v2_text(body) or looks_like_b64_subscription(body) or looks_like_clash_yaml(body):
+        if (
+            looks_like_v2_text(body)
+            or looks_like_b64_subscription(body)
+            or looks_like_clash_yaml(body)
+        ):
             if ENABLE_SAMPLE_NODE_CHECK:
                 # 如果启用了样本检测，则要求至少有一个样本节点连通
                 if _sample_node_check(body):
@@ -282,7 +321,9 @@ def _extract_node_hosts(text: str) -> list[tuple]:
                 continue
 
         # vless/trojan 的简单正则 host:port 提取
-        for m in re.finditer(r"(?:vless|trojan)://[^@\s@]+@([^:/\s:?#]+):(\d+)", text, re.I):
+        for m in re.finditer(
+            r"(?:vless|trojan)://[^@\s@]+@([^:/\s:?#]+):(\d+)", text, re.I
+        ):
             h = m.group(1)
             p = int(m.group(2))
             hosts.append((h, p))
@@ -291,7 +332,11 @@ def _extract_node_hosts(text: str) -> list[tuple]:
     return hosts
 
 
-def _sample_node_check(text: str, count: int = SAMPLE_NODE_CHECK_COUNT, timeout: int = SAMPLE_NODE_CHECK_TIMEOUT) -> bool:
+def _sample_node_check(
+    text: str,
+    count: int = SAMPLE_NODE_CHECK_COUNT,
+    timeout: int = SAMPLE_NODE_CHECK_TIMEOUT,
+) -> bool:
     """对抽取到的若干节点尝试建立短 TCP 连接，任意一个成功即认为订阅至少包含活节点。
     该检查可能会被防火墙拦截或触发更高的网络延迟，因此默认关闭（需通过环境变量显式开启）。
     """
@@ -299,7 +344,7 @@ def _sample_node_check(text: str, count: int = SAMPLE_NODE_CHECK_COUNT, timeout:
     if not hosts:
         return False
     tried = 0
-    for (h, p) in hosts:
+    for h, p in hosts:
         if tried >= count:
             break
         tried += 1

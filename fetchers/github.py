@@ -1,7 +1,7 @@
-import math
 from utils.http_client import request
 
 BASE = "https://api.github.com"
+
 
 def gh_search_code(keyword: str, page: int = 1, per_page: int = 30, token: str = None):
     """
@@ -18,6 +18,7 @@ def gh_search_code(keyword: str, page: int = 1, per_page: int = 30, token: str =
     resp.raise_for_status()
     return resp.json()
 
+
 def gh_search_repo(keyword: str, page: int = 1, per_page: int = 30, token: str = None):
     """
     调用 GitHub API 搜索仓库
@@ -29,12 +30,13 @@ def gh_search_repo(keyword: str, page: int = 1, per_page: int = 30, token: str =
     resp.raise_for_status()
     return resp.json()
 
+
 def iter_search_code(keyword: str, max_pages: int = 3, token: str = None):
     """
     自动翻页搜索，默认最多翻3页
     """
     all_items = []
-    for p in range(1, max_pages+1):
+    for p in range(1, max_pages + 1):
         data = gh_search_code(keyword, page=p, token=token)
         items = data.get("items", [])
         all_items.extend(items)
@@ -42,9 +44,10 @@ def iter_search_code(keyword: str, max_pages: int = 3, token: str = None):
             break
     return all_items
 
+
 def iter_search_repo(keyword: str, max_pages: int = 3, token: str = None):
     all_items = []
-    for p in range(1, max_pages+1):
+    for p in range(1, max_pages + 1):
         data = gh_search_repo(keyword, page=p, token=token)
         items = data.get("items", [])
         all_items.extend(items)

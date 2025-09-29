@@ -14,11 +14,7 @@
     "https://raw.githubusercontent.com/lihungbin/Auto_Update_Sub/HEAD/sub_tested.yaml",
     "https://raw.githubusercontent.com/ShatakVPN/ConfigForge-V2Ray/refs/heads/main/configs/all.txt",
     "https://raw.githubusercontent.com/snakem982/proxypool/main/source/clash-meta-2.yaml",
-    "https://raw.githubusercontent.com/ripaojiedian/freenode/main/clash",
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/base64/trojan",
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/meta/vless",
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/meta/trojan",
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/base64/reality"
+    "https://raw.githubusercontent.com/ripaojiedian/freenode/main/clash"
   ],
   "links": [
     "https://raw.githubusercontent.com/Leon406/SubCrawler/master/sub/share/hysteria2",
@@ -35,17 +31,11 @@
     "https://raw.githubusercontent.com/lihungbin/Auto_Update_Sub/HEAD/sub_tested.yaml",
     "https://raw.githubusercontent.com/ShatakVPN/ConfigForge-V2Ray/refs/heads/main/configs/all.txt",
     "https://raw.githubusercontent.com/snakem982/proxypool/main/source/clash-meta-2.yaml",
-    "https://raw.githubusercontent.com/ripaojiedian/freenode/main/clash",
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/base64/trojan",
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/meta/vless",
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/meta/trojan",
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/base64/reality"
+    "https://raw.githubusercontent.com/ripaojiedian/freenode/main/clash"
   ],
-  "last_total": 19,
-  "ts": 1759159849,
-  "fail": {
-    "https://raw.githubusercontent.com/lihungbin/Auto_Update_Sub/HEAD/sub_tested.yaml": 1
-  },
+  "last_total": 15,
+  "ts": 1759157342,
+  "fail": {},
   "reserve": [],
   "resource_keys": {
     "https://raw.githubusercontent.com/Leon406/SubCrawler/master/sub/share/hysteria2": {
@@ -107,22 +97,6 @@
     "https://raw.githubusercontent.com/ripaojiedian/freenode/main/clash": {
       "owner_key": "ripaojiedian/freenode",
       "base": "main/clash"
-    },
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/base64/trojan": {
-      "owner_key": "sinavm/SVM",
-      "base": "main/subscriptions/xray/base64/trojan"
-    },
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/meta/vless": {
-      "owner_key": "sinavm/SVM",
-      "base": "main/subscriptions/meta/vless"
-    },
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/meta/trojan": {
-      "owner_key": "sinavm/SVM",
-      "base": "main/subscriptions/meta/trojan"
-    },
-    "https://raw.githubusercontent.com/sinavm/SVM/main/subscriptions/xray/base64/reality": {
-      "owner_key": "sinavm/SVM",
-      "base": "main/subscriptions/xray/base64/reality"
     }
   }
 }

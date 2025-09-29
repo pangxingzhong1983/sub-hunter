@@ -1,6 +1,8 @@
 import os
 from typing import Optional
-from dotenv import load_dotenv, find_dotenv
+
+from dotenv import find_dotenv, load_dotenv
+
 
 # -- 1) dotenv 加载顺序：显式环境变量 → 项目根 → /root/.config/sub-hunter/.env
 #    不覆盖已存在环境变量（override=False）
@@ -20,18 +22,23 @@ def _load_env_once() -> None:
     if os.path.exists(cfg_env):
         load_dotenv(dotenv_path=cfg_env, override=False)
 
+
 _LOAD_FLAG = False
+
+
 def _ensure_env_loaded():
     global _LOAD_FLAG
     if not _LOAD_FLAG:
         _load_env_once()
         _LOAD_FLAG = True
 
+
 # -- 2) keyring（可选依赖）：无后端/异常 → 回落到环境变量
 try:
     import keyring  # type: ignore
 except Exception:  # ImportError 或其他
     keyring = None  # noqa: N816
+
 
 def get_secret(service: str, key: str) -> Optional[str]:
     """
@@ -53,6 +60,7 @@ def get_secret(service: str, key: str) -> Optional[str]:
 
     # 环境变量兜底
     return os.environ.get(key)
+
 
 def set_secret(service: str, key: str, value: str) -> None:
     """

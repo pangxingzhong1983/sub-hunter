@@ -1,0 +1,26 @@
+{
+  "yaml.validate": true,
+  "yaml.schemaStore.enable": false,
+  "yaml.schemas": {
+    "https://json.schemastore.org/github-workflow": "**/.github/workflows/*.yml"
+  },
+  "python.defaultInterpreterPath": "/Users/pangxingzhong/Library/CloudStorage/OneDrive-个人/workspace/.venv/bin/python",
+  "python.pythonPath": "/Users/pangxingzhong/Library/CloudStorage/OneDrive-个人/workspace/.venv/bin/python",
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}",
+    "${workspaceFolder}/src",
+    "${workspaceFolder}/.venv/lib/python3.13/site-packages"
+  ],
+  "python.analysis.autoSearchPaths": true,
+  "python.analysis.useLibraryCodeForTypes": true,
+  "python.analysis.stubPath": "typings",
+  "python.analysis.exclude": [
+    "**/*.ipynb",
+    "notebooks/**"
+  ],
+  "python.testing.pytestEnabled": true,
+  "python.analysis.diagnosticSeverityOverrides": {
+    "reportMissingImports": "none",
+    "reportMissingModuleSource": "none"
+  }
+}

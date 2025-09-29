@@ -1,5 +1,5 @@
-import re
-from typing import List, Dict
+from typing import Dict, List
+
 
 def owner_of_repo(full_name: str) -> str:
     """
@@ -8,6 +8,7 @@ def owner_of_repo(full_name: str) -> str:
     """
     return full_name.split("/")[0] if full_name and "/" in full_name else full_name
 
+
 def score_link(url: str, path: str) -> int:
     """
     给订阅链接打分：yaml > txt > sub > 其他
@@ -15,13 +16,14 @@ def score_link(url: str, path: str) -> int:
     url_l = url.lower()
     path_l = (path or "").lower()
     score = 0
-    if any(x in url_l for x in ("yaml","yml")) or path_l.endswith((".yaml",".yml")):
+    if any(x in url_l for x in ("yaml", "yml")) or path_l.endswith((".yaml", ".yml")):
         score += 3
     elif url_l.endswith(".txt") or path_l.endswith(".txt"):
         score += 2
     elif url_l.endswith(".sub") or path_l.endswith(".sub"):
         score += 1
     return score
+
 
 def pick_one_per_owner(items: List[Dict]) -> List[Dict]:
     """

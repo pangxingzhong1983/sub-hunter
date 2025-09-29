@@ -1,0 +1,15 @@
+{
+  "typeCheckingMode": "basic",
+  "reportMissingImports": "none",
+  "reportMissingModuleSource": "none",
+  "executionEnvironments": [
+    {
+      "root": "./",
+      "extraPaths": [
+        "./",
+        "./src"
+      ]
+    }
+  ],
+  "exclude": ["**/*.ipynb"]
+}

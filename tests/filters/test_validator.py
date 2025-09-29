@@ -1,5 +1,5 @@
 import base64
-import json
+
 from filters import validator
 
 
@@ -48,7 +48,9 @@ proxies:
 
 
 def test_v2_text_valid():
-    body = "\n".join(["vmess://example1", "trojan://example2", "ss://example3"]) + "\n"*5
+    body = (
+        "\n".join(["vmess://example1", "trojan://example2", "ss://example3"]) + "\n" * 5
+    )
     assert validator.looks_like_v2_text(body)
 
 
@@ -75,7 +77,9 @@ def test_error_page_rejected():
 
 
 def test_vmess_b64_parse_valid():
-    inner = json_payload = '{"v": "2", "ps": "node1", "add": "1.2.3.4", "port": "443", "id": "11111111-1111-1111-1111-111111111111", "net": "tcp" }'
+    inner = json_payload = (
+        '{"v": "2", "ps": "node1", "add": "1.2.3.4", "port": "443", "id": "11111111-1111-1111-1111-111111111111", "net": "tcp" }'
+    )
     enc = base64.b64encode(json_payload.encode()).decode()
     seg = f"vmess://{enc}"
     assert validator._is_valid_vmess_link_segment(seg)
