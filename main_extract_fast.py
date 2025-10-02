@@ -2,6 +2,7 @@ import asyncio
 import base64
 import binascii
 import os
+import re
 import string
 import sys
 import time
@@ -73,9 +74,32 @@ URL_SUBSTR_BLACKLIST = [
     "sub-web.netlify.app",
     "loyalsoldier/clash-rules",
     "help.wwkejishe.top/free-shadowrocket",
+    # 新增：排除明显的非订阅链接
+    "forums/topic/",
+    "forum.php",
+    "/thread-",
+    "/viewtopic.php",
+    "/showthread.php",
+    "/discussion/",
+    "sockscap64.com/forums",
+    "github.com/releases",
+    "/issues/",
+    "/pull/",
+    "/wiki/",
+    "/docs/",
+    "youtube.com",
+    "youtu.be",
+    "bilibili.com",
+    "telegram.me",
+    "t.me/",
+    "/download/",
+    "/archive/",
+    "/blob/",  # GitHub blob 页面
+    "/commit/",
+    "/compare/",
 ]
 
-MAX_REPOS = 10  # 先小批量验证，后续可改为 0=不限
+MAX_REPOS = 50  # 先小批量验证，后续可改为 0=不限
 PRINT_EVERY_REPO = 10  # 每处理多少仓库打一次进度
 PRINT_EVERY_FILE = 50  # 每检查多少文件打一次进度
 
@@ -404,6 +428,94 @@ def gather_candidates(token):
     return uniq
 
 
+def _is_valid_token(token: str) -> bool:
+    """验证订阅链接中的 token 是否有效。
+    无效特征：
+    1. 全是相同字符（如：000000... 或 aaaa...）
+    2. 明显的占位符模式（如：demo, test, example, placeholder等）
+    3. 过短或过长的 token
+    4. 包含明显的测试/示例词汇
+    """
+    if not token or len(token) < 8:
+        return False
+    
+    # 过长的 token（可能是错误的）
+    if len(token) > 128:
+        return False
+    
+    token_lower = token.lower()
+    
+    # 检查明显的占位符
+    placeholders = {
+        'demo', 'test', 'example', 'placeholder', 'sample', 'fake',
+        'invalid', 'expired', 'none', 'null', 'undefined', 'default',
+        'temp', 'temporary', 'admin', 'user', 'guest', 'public'
+    }
+    
+    for placeholder in placeholders:
+        if placeholder in token_lower:
+            return False
+    
+    # 检查是否全是相同字符
+    if len(set(token)) <= 2:  # 只有1-2个不同字符
+        return False
+    
+    # 检查是否为简单递增数字序列（123456...）
+    if token.isdigit():
+        if len(token) >= 6:
+            # 检查是否为连续数字
+            is_sequential = True
+            for i in range(1, len(token)):
+                if int(token[i]) != (int(token[i-1]) + 1) % 10:
+                    is_sequential = False
+                    break
+            if is_sequential:
+                return False
+        # 检查是否为重复数字（111111, 222222等）
+        if len(set(token)) == 1:
+            return False
+    
+    # 检查十六进制模式中的明显无效值
+    if re.match(r'^[0-9a-fA-F]+$', token):
+        # 全0或全F的十六进制
+        if token_lower in ['00000000', 'ffffffff'] or \
+           token_lower == '0' * len(token) or \
+           token_lower == 'f' * len(token):
+            return False
+    
+    return True
+
+
+def _validate_subscription_url_params(url: str) -> bool:
+    """验证订阅链接的参数是否有效。
+    主要检查 token/key 等参数的合法性。
+    """
+    try:
+        from urllib.parse import urlparse, parse_qs
+        parsed = urlparse(url)
+        params = parse_qs(parsed.query)
+        
+        # 检查 token 参数
+        if 'token' in params:
+            tokens = params['token']
+            if tokens:  # token 参数存在
+                token = tokens[0]  # 取第一个 token 值
+                if not _is_valid_token(token):
+                    return False
+        
+        # 检查 key 参数（有些机场用 key 而不是 token）
+        if 'key' in params:
+            keys = params['key']
+            if keys:
+                key = keys[0]
+                if not _is_valid_token(key):
+                    return False
+        
+        return True
+    except Exception:
+        return True  # 解析失败时不拒绝，避免误杀
+
+
 def _maybe_base64_subscription(text: str) -> bool:
     cleaned = "".join(text.strip().split())
     if len(cleaned) > 8192:
@@ -550,11 +662,22 @@ def canonicalize_url(url: str) -> str:
         p = urlparse(s)
         host = (p.netloc or "").lower()
         path = p.path or ""
+        
+        # 使用智能 GitHub 检测和转换
+        username, repo, branch, detected_path = _detect_github_info_from_url(s)
+        if username and repo and detected_path:
+            converted_url = f"https://raw.githubusercontent.com/{username}/{repo}/{branch}{detected_path}"
+            print(f"[智能GitHub转换] {s} -> {converted_url}")
+            return converted_url
+        
+        # GitHub.com raw 地址转换
         if host == "github.com" and "/raw/" in path:
             new_path = path.replace("/raw/refs/heads/", "/")
             new_path = new_path.replace("/raw/refs/", "/")
             new_path = new_path.replace("/raw/", "/")
-            return f"https://raw.githubusercontent.com{new_path}"
+            converted_url = f"https://raw.githubusercontent.com{new_path}"
+            print(f"[GitHub Raw转换] {s} -> {converted_url}")
+            return converted_url
     except Exception:
         pass
     return s
@@ -827,6 +950,11 @@ def main():
         if any(sub in full_lc for sub in URL_SUBSTR_BLACKLIST):
             print(f"[黑名单URL剔除] {url}")
             return False
+        
+        # 验证 URL 参数（特别是 token）
+        if not _validate_subscription_url_params(url):
+            print(f"[无效token剔除] {url}")
+            return False
         try:
             from urllib.parse import urlparse
 
@@ -922,9 +1050,11 @@ def main():
         nu = normalize_url(it.get("url"))
         if not nu:
             continue
-        it["url"] = nu
-        if is_subscription_url(nu):
-            urls.append(nu)
+        # 应用 GitHub Pages 转换
+        converted_url = _convert_github_pages_to_raw(nu)
+        it["url"] = converted_url
+        if is_subscription_url(converted_url):
+            urls.append(converted_url)
     print(f"[统计] 抓取总数: {len(items)}，筛选后订阅数: {len(urls)}")
 
     hist = load_history(HIST_PATH)
@@ -1330,6 +1460,109 @@ def _parse_last_modified(h: str):
         return int(dt.timestamp())
     except Exception:
         return None
+
+
+def _detect_github_info_from_url(url: str) -> tuple:
+    """
+    智能检测 URL 中的 GitHub 信息，返回 (username, repo, branch, path)
+    支持各种 GitHub 相关的域名和CDN代理
+    """
+    try:
+        p = urlparse(url)
+        host = p.netloc.lower()
+        path = p.path or ""
+        
+        # 1. 标准 GitHub Pages: *.github.io
+        if host.endswith(".github.io"):
+            username = host.replace(".github.io", "")
+            if username:
+                return username, f"{username}.github.io", "main", path
+        
+        # 2. jsdelivr CDN: cdn.jsdelivr.net/gh/user/repo
+        if host == "cdn.jsdelivr.net" and path.startswith("/gh/"):
+            parts = path[4:].split("/")  # 移除 "/gh/"
+            if len(parts) >= 2:
+                user = parts[0]
+                repo = parts[1]
+                if "@" in repo:
+                    repo, branch = repo.split("@", 1)
+                else:
+                    branch = "main"
+                remaining_path = "/" + "/".join(parts[2:]) if len(parts) > 2 else ""
+                return user, repo, branch, remaining_path
+        
+        # 3. 其他可能的 GitHub Pages 代理域名
+        # 通过路径模式识别：包含 /uploads/YYYY/MM/ 这种典型的 GitHub Pages 模式
+        github_page_patterns = [
+            r"/uploads/\d{4}/\d{2}/[^/]+\.(txt|yaml|yml)$",  # /uploads/2025/10/file.txt
+            r"/\d{4}/\d{2}/[^/]+\.(txt|yaml|yml)$",           # /2025/10/file.txt  
+            r"/files/[^/]+\.(txt|yaml|yml)$",                 # /files/file.txt
+            r"/raw/[^/]+\.(txt|yaml|yml)$",                   # /raw/file.txt
+        ]
+        
+        for pattern in github_page_patterns:
+            if re.search(pattern, path):
+                # 尝试从域名推断 GitHub 用户名
+                # 很多 GitHub Pages 使用自定义域名，但域名通常包含用户名信息
+                
+                # 方法1: 提取域名中可能的用户名（去掉常见后缀）
+                domain_parts = host.split('.')
+                if len(domain_parts) >= 2:
+                    # 移除常见的CDN/代理标识，尝试多种组合
+                    potential_usernames = []
+                    
+                    # 原始第一部分
+                    first_part = domain_parts[0]
+                    
+                    # 尝试不同的清理方式
+                    candidates = [
+                        first_part,  # 原始
+                        re.sub(r'^(www|cdn|api|node|free|sub|clash)[-_]?', '', first_part),  # 移除前缀
+                        re.sub(r'[-_]?(node|cc|site|net|page|cdn)$', '', first_part),      # 移除后缀
+                        re.sub(r'^(www|cdn|api|node|free|sub|clash)[-_]?', '', 
+                               re.sub(r'[-_]?(node|cc|site|net|page|cdn)$', '', first_part)) # 移除前缀+后缀
+                    ]
+                    
+                    # 特殊处理：如果是 node.xxxxx.cc 格式，优先使用中间部分作为用户名
+                    if len(domain_parts) >= 2:
+                        # 对于二级域名，检查第一部分是否为常见前缀
+                        if len(domain_parts) == 3 and first_part in ['node', 'api', 'cdn', 'sub', 'www']:
+                            middle_part = domain_parts[1]
+                            # 将完整的中间部分放在最前面（优先级最高）
+                            candidates.insert(0, middle_part)
+                            
+                        # 对于所有情况，也尝试使用二级域名的第一部分
+                        if len(domain_parts) >= 2:
+                            second_level = domain_parts[-2] if len(domain_parts) >= 2 else domain_parts[0]
+                            if second_level != first_part:  # 避免重复
+                                candidates.insert(0, second_level)
+                    
+                    # 选择最佳候选用户名（按优先级顺序）
+                    for candidate in candidates:
+                        if candidate and len(candidate) >= 3 and re.match(r'^[a-zA-Z0-9][a-zA-Z0-9_-]*[a-zA-Z0-9]$', candidate):
+                            return candidate, f"{candidate}.github.io", "main", path
+        
+        return None, None, None, None
+    except Exception:
+        return None, None, None, None
+
+
+def _convert_github_pages_to_raw(url: str) -> str:
+    """
+    智能转换各种 GitHub Pages 和 CDN 地址为 raw.githubusercontent.com 地址
+    支持：
+    1. *.github.io
+    2. cdn.jsdelivr.net/gh/user/repo  
+    3. 自定义域名的 GitHub Pages（通过路径模式识别）
+    """
+    username, repo, branch, path = _detect_github_info_from_url(url)
+    
+    if username and repo and path:
+        converted_url = f"https://raw.githubusercontent.com/{username}/{repo}/{branch}{path}"
+        print(f"[智能GitHub转换] {url} -> {converted_url}")
+        return converted_url
+    
+    return url
 
 
 def sample_last_modified(urls, concurrency=8, timeout=6):
